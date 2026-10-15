@@ -1,0 +1,43 @@
+BLINK – frittstående app for iPhone
+
+HVORFOR MÅ APPEN LIGGE PÅ NETT ÉN GANG?
+iPhone kan ikke installere en web-app direkte fra en fil. Første gang må
+Safari hente appen fra en https-adresse. Ved første åpning lagres hele
+appen på telefonen, og deretter starter den alltid fra telefonen, også uten
+nett, og selv om nettsiden er nede, passordbeskyttet eller slettet.
+Dataene dine lagres bare på telefonen og sendes aldri til nettsiden.
+
+STEG 1: LEGG APPEN PÅ NETT (GitHub Pages, gratis og åpen for alle)
+1. Lag en gratis konto på github.com.
+2. Trykk «+» > «New repository». Gi det navnet «blink», velg «Public»
+   og trykk «Create repository».
+3. Trykk «uploading an existing file». Pakk ut zip-filen og dra ALLE
+   filene inn (index.html, sw.js, manifest.webmanifest, de tre
+   icon-filene og denne filen). De må ligge øverst, ikke i en undermappe.
+   Trykk «Commit changes».
+4. Gå til «Settings» > «Pages». Under «Branch» velger du «main» og
+   «/ (root)», og trykker «Save».
+5. Vent 1–3 minutter og last siden på nytt. Øverst står adressen,
+   for eksempel https://brukernavn.github.io/blink/
+6. Test adressen i et privat vindu. Den skal åpne Blink uten innlogging.
+
+(Netlify går også, men bruk da adressen som slutter på .netlify.app,
+og slå av «Password Protection» under Project configuration >
+Access & security > Visitor access.)
+
+STEG 2: INSTALLER PÅ IPHONE
+1. Åpne adressen i Safari (ikke Chrome eller en annen nettleser).
+2. Trykk Del-knappen > «Legg til på Hjem-skjerm» > «Legg til».
+3. Åpne Blink fra Hjem-skjermen MENS du har nett, og vent ca. 10 sekunder.
+   Nå lagres appen på telefonen.
+4. Test: Slå på flymodus og åpne Blink. Den skal starte som vanlig.
+
+OPPDATERINGER
+Last opp nye filer til samme sted. Neste gang du åpner Blink med nett,
+hentes den nye versjonen i bakgrunnen, og den brukes fra gangen etter.
+
+VIKTIG OM DATA
+- Alt lagres bare i Blink på telefonen.
+- Fjerner du Blink fra Hjem-skjermen, slettes dataene også.
+- Bruk «Eksporter data» under Utstyr jevnlig, og «Importer data»
+  på ny telefon eller etter ny installasjon.

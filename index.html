@@ -1,0 +1,2132 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blink</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Blink">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11161D" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --paper:#FFFFFF; --surface:#FFFFFF; --ink:#1A1A1A; --muted:#6E6E6E; --line:#B0B0B0;
+  --green:#1F4E78; --on-green:#FFFFFF; --title:#1F4E78; --band:#D9E1F2; --sum:#FCE4D6; --accent:#A87A22;
+  --hit:#E0761A; --mpi:#2E75B6; --warn:#C00000;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#11161D; --surface:#19212B; --ink:#E6EAF0; --muted:#9AA4B1; --line:#3B4757;
+    --green:#5B9BD5; --on-green:#0D1824; --title:#9DC3E6; --band:#22324A; --sum:#4A3424; --accent:#D9A84E;
+    --hit:#F09A45; --mpi:#7FB8E8; --warn:#FF7B7B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#11161D; --surface:#19212B; --ink:#E6EAF0; --muted:#9AA4B1; --line:#3B4757;
+    --green:#5B9BD5; --on-green:#0D1824; --title:#9DC3E6; --band:#22324A; --sum:#4A3424; --accent:#D9A84E;
+    --hit:#F09A45; --mpi:#7FB8E8; --warn:#FF7B7B;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);
+  font:15px/1.5 Arial,"Helvetica Neue",Helvetica,sans-serif;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;margin:0;line-height:1.1}
+main{max-width:720px;margin:0 auto;padding:16px 16px 180px}
+header.top{max-width:720px;margin:0 auto;padding:14px 16px 0;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+header.top h1{font-size:28px;font-weight:700}
+header.top span{color:var(--muted);font-size:14px;text-align:right}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--hit);outline-offset:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:6px;
+  border:2px solid var(--green);background:var(--green);color:var(--on-green);font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;
+  font-size:19px;font-weight:600;letter-spacing:.02em}
+.btn.ghost{background:transparent;color:var(--green)}
+.btn.small{min-height:38px;font-size:16px;padding:0 14px}
+.btn.danger{background:transparent;border-color:var(--warn);color:var(--warn)}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.hidden,[hidden]{display:none!important}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:6px 0 10px}
+.sec-head h2{font-size:30px}
+.muted{color:var(--muted)}
+.note{font-size:14px;color:var(--muted);margin:8px 0 0}
+
+/* Segmented controls */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:2px solid var(--green);border-radius:6px;overflow:hidden;margin:4px 0 12px}
+.seg button{border:0;background:transparent;padding:9px 4px;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:18px;font-weight:600;color:var(--green)}
+.seg button+button{border-left:2px solid var(--green)}
+.seg button[aria-pressed="true"]{background:var(--green);color:var(--on-green)}
+.seg button:disabled{cursor:default}
+.seg.prog button{font-size:18px;padding:11px 2px}
+.dagsform button{display:grid;gap:1px;line-height:1.1;padding:7px 2px;font-size:20px}
+.dagsform button small{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:12px;font-weight:500}
+details.safety{background:var(--surface);border:1.5px solid var(--line);border-left:5px solid var(--hit);border-radius:8px;padding:10px 14px;margin:0 0 6px}
+details.safety summary{cursor:pointer;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:20px;font-weight:600}
+details.safety ul{list-style:none;margin:10px 0 2px;padding:0;display:grid;gap:8px}
+details.safety label{display:flex;gap:10px;align-items:flex-start;font-size:15px}
+details.safety input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--green)}
+.minifig{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:end;padding:8px 0;border-top:1px solid var(--line)}
+.minifig b{align-self:center;font-weight:600}
+.stage-top h3{font-size:22px;flex:1}
+.stage-top .muted{font-size:15px}
+
+/* Start */
+.start{display:grid;gap:20px;justify-items:center;text-align:center;padding:18px 0 8px}
+.start svg{width:min(56vw,230px);height:auto}
+.start h2{font-size:38px;font-weight:700}
+.start p{margin:0;color:var(--muted);max-width:36ch}
+.start .row{justify-content:center}
+
+/* Ring editor */
+.hint{font-size:15px;color:var(--muted);margin:0 0 10px;min-height:1.5em}
+.stage{position:relative;overflow:auto;max-height:68vh;border-radius:6px;background:#000;touch-action:pan-x pan-y}
+.stage canvas{display:block;width:100%;height:auto;cursor:crosshair}
+.busy{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;background:rgba(10,14,8,.55);color:#fff;
+  font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:22px;font-weight:600;text-align:center;padding:16px}
+.busy i{width:46px;height:46px;border-radius:50%;border:4px solid rgba(255,255,255,.3);border-top-color:#FFD400}
+@media (prefers-reduced-motion:no-preference){.busy i{animation:spin 1s linear infinite}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toolbar{display:flex;align-items:center;gap:10px;margin:10px 0 0;flex-wrap:wrap}
+.toolbar label{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted)}
+.toolbar input[type=range]{width:120px;accent-color:var(--green)}
+.ai-msg{font-size:15px;margin:8px 0 0;color:var(--muted);min-height:0}
+.ai-msg.err{color:var(--warn)}
+
+/* Score */
+.score{margin:20px 0 8px;display:grid;grid-template-columns:auto 1fr;gap:4px 22px;align-items:end}
+.score .big{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-weight:700;font-size:88px;line-height:.85;letter-spacing:-.02em;white-space:nowrap}
+.score .big small{font-size:30px;color:var(--muted);font-weight:500;letter-spacing:0}
+.score .big .unit{display:block;font-size:16px;color:var(--muted);font-weight:500;letter-spacing:.02em;margin-top:8px}
+.score dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:15px}
+.score dt{color:var(--muted)}
+.score dd{margin:0;font-weight:600}
+@media (max-width:420px){.score{grid-template-columns:1fr}.score .big{font-size:76px}}
+.shots{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.shots span{min-width:34px;height:34px;padding:0 4px;display:inline-grid;place-items:center;border-radius:17px;border:2px solid var(--hit);
+  font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-weight:700;font-size:16px}
+.shots span.x{background:var(--hit);color:#fff}
+.placeholder{color:var(--muted);margin:20px 0 8px}
+
+/* Forms */
+fieldset{border:0;padding:0;margin:22px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
+fieldset legend{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:22px;font-weight:600;padding:0;margin-bottom:10px}
+fieldset .full{grid-column:1/-1}
+.field{display:grid;gap:4px;min-width:0}
+.field>span{font-size:14px;color:var(--muted)}
+.field input,.field textarea,.field select,select.inline{width:100%;min-height:46px;padding:10px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--surface)}
+.field textarea{min-height:76px;resize:vertical}
+.check{display:flex;align-items:center;gap:10px;min-height:46px;font-size:15px}
+.check input{width:22px;height:22px;accent-color:var(--green)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 0}
+
+/* Steppers / felt / dyn */
+.stepper{display:inline-grid;grid-template-columns:38px 34px 38px;align-items:center;border:1.5px solid var(--line);border-radius:6px;background:var(--surface);overflow:hidden}
+.stepper button{border:0;background:transparent;height:38px;font-size:22px;line-height:1;color:var(--green);font-weight:600}
+.stepper output{text-align:center;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:20px;font-weight:700}
+.ctr{display:grid;gap:2px;justify-items:start}
+.ctr>span{font-size:13px;color:var(--muted)}
+.figs{display:grid;gap:8px;margin:14px 0 0}
+.fig{display:grid;grid-template-columns:1fr auto auto 44px;gap:12px;align-items:end;padding:10px 12px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px}
+.fig h3{font-size:20px;font-weight:600;align-self:center}
+.fig h3 small{display:block;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:13px;color:var(--muted);font-weight:500}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border:1.5px solid var(--green);border-radius:6px;background:transparent;color:var(--green)}
+.icon-btn:disabled{opacity:.4}
+.icon-btn svg{width:22px;height:22px}
+@media (max-width:420px){.fig{grid-template-columns:1fr auto auto;}.fig .icon-btn{grid-column:1/-1;width:100%}}
+.stage-card{padding:14px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;margin:12px 0 0}
+.stage-top{display:flex;gap:10px;align-items:center}
+.stage-top input{flex:1;min-width:0;min-height:42px;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--paper);
+  font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:20px;font-weight:600}
+.zones{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 8px;margin:14px 0 0}
+.stage-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 0}
+.stage-fields .field input{min-height:42px;padding:8px 10px;background:var(--paper)}
+@media (max-width:420px){.stage-fields{grid-template-columns:1fr 1fr}.stage-fields .field:first-child{grid-column:1/-1}}
+.stage-res{margin:12px 0 0;font-size:15px}
+.stage-res b{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:22px}
+
+/* Toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);
+  padding:10px 18px;border-radius:6px;font-size:15px;z-index:30;max-width:90vw}
+
+/* Lists */
+.list{display:grid;gap:10px;margin:8px 0 0}
+.item{display:grid;grid-template-columns:72px 1fr auto;gap:14px;align-items:center;padding:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;text-align:left;width:100%}
+.item .thumb{width:72px;height:72px;object-fit:cover;border-radius:4px;background:var(--paper);display:grid;place-items:center}
+.item .thumb svg{width:44px;height:44px}
+.item h3{font-size:20px;font-weight:600}
+.item p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.item .pts{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:28px;font-weight:700;text-align:right;line-height:1}
+.item .pts small{display:block;font-size:14px;font-weight:500;color:var(--muted);margin-top:3px}
+.empty{color:var(--muted);padding:30px 0;text-align:center}
+.eq-group{margin:18px 0 0}
+.eq-group .sec-head{margin-bottom:6px}
+.eq-group h3{font-size:24px}
+.eq-item{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;background:var(--surface);border:1.5px solid var(--line);border-radius:8px;margin:0 0 8px}
+.eq-item b{font-weight:600;display:block}
+.eq-item span{font-size:14px;color:var(--muted)}
+.eq-item.fixed{cursor:default;background:transparent}
+.settings{margin:30px 0 0;padding:16px 0 0;border-top:2px solid var(--line)}
+.settings h3{font-size:24px;margin:18px 0 6px}
+.settings p{margin:0 0 10px;font-size:15px;color:var(--muted)}
+.keyrow{display:flex;gap:8px;flex-wrap:wrap}
+.keyrow input{flex:1;min-width:180px;min-height:46px;padding:10px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--surface)}
+
+/* Progress */
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 6px}
+.filters select{min-height:42px;padding:6px 10px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0 0}
+.kpi{background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:12px 14px}
+.kpi b{display:block;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:32px;line-height:1.05}
+.kpi span{font-size:14px;color:var(--muted)}
+.kpi em{font-style:normal;font-size:14px;font-weight:600}
+.up{color:var(--green)} .down{color:var(--warn)}
+.chart{background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:12px 12px 8px;margin:12px 0 0}
+.chart h3{font-size:20px;font-weight:600;margin-bottom:2px}
+.chart p{margin:0 0 6px;font-size:14px;color:var(--muted)}
+.chart svg{width:100%;height:auto;display:block}
+.composite{display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:16px;align-items:center}
+@media (max-width:460px){.composite{grid-template-columns:1fr}.composite svg{max-width:260px;margin:0 auto}}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:500;color:var(--muted);font-size:13px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td:first-child{white-space:normal;min-width:130px}
+
+/* Dialog */
+dialog{border:0;border-radius:10px;padding:0;width:min(520px,calc(100vw - 24px));background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dlg-body{padding:18px}
+.dlg-body h3{font-size:26px;margin-bottom:6px}
+.dlg-body fieldset{margin-top:10px}
+
+/* Nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1.5px solid var(--line);z-index:10;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .tabrow{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.sumbar{background:var(--green);color:var(--on-green)}
+.sumbar>div{max-width:720px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 16px}
+.sumbar b,.daysum b{display:block;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:18px;font-weight:600;line-height:1.15}
+.sumbar span{display:block;font-size:13px;opacity:.85}
+.sumbar strong,.daysum strong{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:30px;font-weight:700;white-space:nowrap;line-height:1}
+.daysum{display:flex;justify-content:space-between;align-items:end;gap:12px;padding:14px 2px 6px;margin-top:6px;border-bottom:2px solid var(--green)}
+.daysum span{display:block;font-size:14px;color:var(--muted)}
+nav.tabs button{border:0;background:transparent;padding:14px 2px 12px;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;font-size:18px;font-weight:600;color:var(--muted);border-top:3px solid transparent;margin-top:-1.5px}
+nav.tabs button[aria-current="page"]{color:var(--ink);border-top-color:var(--hit)}
+@media (prefers-reduced-motion:no-preference){.btn,.seg button{transition:background .15s,color .15s}}
+
+/* ---- Regneark-stil: Arial, marineblå overskrifter, lyseblå kategorirader, fersken summer ---- */
+h1,h2,h3{color:var(--title)}
+header.top{border-bottom:3px solid var(--green);padding-bottom:10px}
+header.top h1{font-size:24px;font-weight:700;color:var(--title)}
+.sec-head h2{font-size:22px}
+.btn{border-radius:2px;font-size:15px;font-weight:700;letter-spacing:0;min-height:44px}
+.btn.small{font-size:14px;min-height:36px}
+.seg{border-radius:2px;border-width:1px}
+.seg button,.seg.prog button{font-size:14px;font-weight:700}
+.seg button+button{border-left-width:1px}
+.dagsform button{font-size:16px}
+.field>span,.ctr>span{font-weight:700;color:var(--ink);font-size:13px}
+.field input,.field textarea,.field select,select.inline,.keyrow input,.stage-top input,.stage-fields .field input{border-radius:0;border:1px solid var(--line);background:var(--surface)}
+.item,.kpi,.chart,.fig,.stage-card,.eq-item,details.safety,.stepper,.icon-btn,dialog,.toast,.item .thumb{border-radius:0}
+.item,.kpi,.chart,.fig,.stage-card,.eq-item,.stepper{border:1px solid var(--line)}
+.icon-btn{border-width:1px}
+.item h3,.fig h3{font-size:16px;font-weight:700}
+.item .pts{font-size:22px;color:var(--title)}
+.kpi b{font-size:24px;color:var(--title)}
+.score .big{font-size:60px;color:var(--title);letter-spacing:-.01em}
+.score .big small{font-size:22px}
+@media (max-width:420px){.score .big{font-size:54px}}
+.stepper output{font-size:17px}
+.stage-card{padding:14px}
+.stage-top{background:var(--band);margin:-14px -14px 0;padding:8px 14px;border-bottom:1px solid var(--line)}
+.stage-top h3{font-size:16px;color:var(--ink)}
+.stage-top input{font-size:16px;font-weight:700;background:var(--surface)}
+.stage-res b{font-size:17px}
+.minifig b{font-size:15px}
+.fig{background:var(--surface)}
+.chart{padding:0 0 10px}
+.chart>h3{background:var(--band);margin:0;padding:8px 12px;border-bottom:1px solid var(--line);font-size:15px;color:var(--ink)}
+.chart>p,.chart>svg,.chart>.tablewrap{margin-left:12px;margin-right:12px}
+.chart>p{margin-top:8px}
+.chart.composite{padding:12px}
+.chart.composite h3{background:none;border:0;padding:0;font-size:15px}
+th,td{border:1px solid var(--line);padding:6px 8px}
+th{background:var(--green);color:var(--on-green);font-weight:700;font-size:13px}
+.daysum{background:var(--sum);border:1px solid var(--line);padding:8px 10px;margin-top:14px;align-items:center}
+.daysum span{color:var(--ink)}
+.daysum strong{font-size:22px;color:var(--ink)}
+.sumbar strong{font-size:24px}
+.sumbar b{font-size:15px;font-weight:700}
+.eq-group h3{font-size:18px}
+.eq-item b{font-weight:700}
+.shots span{border-radius:2px;border-width:1px;font-size:14px;min-width:32px;height:30px}
+.shots span.x{background:var(--accent);border-color:var(--accent)}
+nav.tabs button{font-size:14px;font-weight:700}
+nav.tabs button[aria-current="page"]{color:var(--title);border-top-color:var(--accent)}
+details.safety{border:1px solid var(--line);border-left:4px solid var(--accent)}
+details.safety summary{font-size:16px;font-weight:700}
+.start h2{font-size:28px}
+.busy{font-size:18px}
+.dlg-body h3{font-size:20px}
+.settings h3{font-size:18px}
+.hrow{display:grid;grid-template-columns:1fr 46px;gap:6px}
+.hrow .del{width:46px;height:auto;border:1px solid var(--line);color:var(--warn);background:var(--surface)}
+.toast{display:flex;align-items:center;justify-content:space-between;gap:14px;width:max-content;min-width:min(320px,90vw);max-width:min(440px,92vw)}
+.toast button{border:0;background:none;color:inherit;font-weight:700;text-decoration:underline;padding:6px 2px;min-height:36px}
+.subhead{font-size:17px;margin:22px 0 6px}
+.custom-row{display:grid;grid-template-columns:1.4fr 1fr .8fr 44px;gap:6px;margin:0 0 6px}
+.custom-row input{min-width:0;min-height:44px;padding:8px 10px;border:1px solid var(--line);background:var(--surface)}
+.custom-row .del{width:44px;height:44px;border:1px solid var(--line);color:var(--warn);background:var(--surface)}
+.fri-img{display:block;max-width:100%;max-height:320px;border:1px solid var(--line);margin:0 0 8px}
+.toolbar input[type=range],.check input,details.safety input{accent-color:var(--green)}
+</style>
+</head>
+<body>
+<header class="top"><h1>Blink</h1><span id="syncState">Lagres på denne telefonen</span></header>
+
+<main>
+<!-- ================= NY SERIE ================= -->
+<section id="view-new">
+  <div class="sec-head"><h2 id="editTitle">Ny serie</h2><button class="btn ghost small hidden" id="btnNewBlank">Ny serie</button></div>
+  <div class="seg prog" role="group" aria-label="Skyteprogram" id="progSeg">
+    <button data-prog="ring" aria-pressed="true">Bane</button>
+    <button data-prog="felt" aria-pressed="false">Felt</button>
+    <button data-prog="dyn" aria-pressed="false">Dynamisk</button>
+    <button data-prog="fri" aria-pressed="false">Fri</button>
+  </div>
+
+  <!-- BANE -->
+  <div id="ringSec">
+    <div id="startPane" class="start">
+      <svg viewBox="-100 -100 200 200" aria-hidden="true">
+        <circle r="98" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/>
+        <g fill="none" stroke="var(--ink)" stroke-width="1.4"><circle r="90"/><circle r="72"/><circle r="54"/></g>
+        <circle r="45" fill="var(--ink)"/>
+        <g fill="none" stroke="var(--surface)" stroke-width="1.4"><circle r="36"/><circle r="18"/></g>
+        <circle cx="11" cy="-7" r="4.5" fill="var(--hit)"/><circle cx="-14" cy="9" r="4.5" fill="var(--hit)"/>
+        <circle cx="3" cy="16" r="4.5" fill="var(--hit)"/><circle cx="26" cy="31" r="4.5" fill="var(--hit)"/>
+      </svg>
+      <h2>Ta bilde av skiva</h2>
+      <p>Hold telefonen rett over skiva så hele ringsystemet er med. Bildet tolkes automatisk, og du får poeng, innerblinker, gruppe og treffpunkt.</p>
+      <div class="row">
+        <label class="btn" for="camInput">Åpne kamera</label>
+        <label class="btn ghost" for="fileInput">Velg bilde</label>
+      </div>
+      <input id="camInput" class="hidden" type="file" accept="image/*" capture="environment">
+      <input id="fileInput" class="hidden" type="file" accept="image/*">
+    </div>
+    <div id="editPane" class="hidden">
+      <div class="seg" role="group" aria-label="Markering" id="modeSeg">
+        <button data-mode="center" aria-pressed="true">1 Senter</button>
+        <button data-mode="edge" aria-pressed="false">2 Ytterring</button>
+        <button data-mode="hits" aria-pressed="false">3 Treff</button>
+      </div>
+      <p class="hint" id="hint"></p>
+      <div class="stage" id="stage"><canvas id="cv"></canvas><div class="busy hidden" id="busy"><i></i><span>Tolker skiva …</span></div></div>
+      <div class="toolbar">
+        <button class="btn small" id="btnAI">Tolk på nytt</button>
+        <button class="btn ghost small" id="btnClaude" hidden>Tolk med Claude</button>
+        <button class="btn ghost small" id="btnUndo">Angre siste treff</button>
+        <button class="btn ghost small" id="btnNewPhoto">Nytt bilde</button>
+        <label>Zoom <input type="range" id="zoom" min="1" max="4" step="0.25" value="1"></label>
+      </div>
+      <p class="ai-msg" id="aiMsg" role="status"></p>
+      <fieldset>
+        <label class="field full"><span>Skive</span><select id="fTarget"></select></label>
+        <label class="field"><span>Kulediameter (mm)</span><input id="fHole" type="number" inputmode="decimal" min="0" step="0.01" placeholder="F.eks. 4,5"></label>
+        <label class="check"><input type="checkbox" id="fDecimal"> Desimaltelling</label>
+      </fieldset>
+      <p class="note" id="ruleNote"></p>
+      <div id="scoreBox"></div>
+    </div>
+  </div>
+
+  <!-- FELT (inkl. minifelt) -->
+  <div id="miniSec" class="hidden">
+    <details class="safety"><summary>Sikkerhetssjekk før start</summary>
+      <ul>
+        <li><label><input type="checkbox"> Sikkerhetsflagg står i våpenet når det er utenfor kofferten og ikke i bruk på standplass</label></li>
+        <li><label><input type="checkbox"> Jeg lader først når standplassleder kommanderer «Lading – KLAR»</label></li>
+        <li><label><input type="checkbox"> Løpet peker fremover, maks 45 grader ned mot gulv eller voll, under lading og i klarstilling</label></li>
+        <li><label><input type="checkbox"> Hørselsvern og skytebriller er på</label></li>
+        <li><label><input type="checkbox"> Våpenet er godkjent i vektkontrollen</label></li>
+      </ul>
+    </details>
+    <fieldset>
+      <label class="field"><span>Type</span><select id="fFeltType">
+        <option value="">Velg type</option><option value="feltpistol">Feltpistol</option><option value="minifelt">Minifelt</option><option value="luftminifelt">Luftminifelt</option><option value="feltrifle">Felt, rifle</option><option value="annen">Annen</option></select></label>
+      <label class="field"><span>Klasse</span><select id="fMiniKlasse">
+        <option value="">Velg klasse</option><option value="fin">Finfelt (.22 LR)</option><option value="grov">Grovfelt</option><option value="luft">Luft (4,5 mm)</option><option value="annen">Annen klasse</option></select></label>
+      <label class="field"><span>Antall standplasser</span><select id="fMiniCount"></select></label>
+      <label class="field"><span>Skudd per standplass</span><select id="fMiniShots"></select></label>
+    </fieldset>
+    <p class="note" id="miniNote"></p>
+    <div id="stations"></div>
+    <p class="ai-msg" id="miniMsg" role="status"></p>
+    <div id="miniTotals"></div>
+  </div>
+
+  <!-- FRI -->
+  <div id="friSec" class="hidden">
+    <p class="note" style="margin-top:0">Fri trening der du selv bestemmer hva som registreres. Fyll inn det som passer, og la resten stå tomt.</p>
+    <fieldset>
+      <label class="field full"><span>Mål</span><input id="fFriMal" list="friMal" placeholder="F.eks. Stålplate 20 cm, popper, egen skive"></label>
+      <datalist id="friMal"></datalist>
+      <label class="field"><span>Antall skudd</span><input id="fFriShots" type="number" inputmode="numeric" min="0"></label>
+      <label class="field"><span>Treff</span><input id="fFriHits" type="number" inputmode="numeric" min="0"></label>
+      <label class="field"><span>Poeng</span><input id="fFriPts" type="number" inputmode="decimal" step="any"></label>
+      <label class="field"><span>Maks poeng</span><input id="fFriMax" type="number" inputmode="decimal" min="0" step="any"></label>
+      <label class="field"><span>Tid (s)</span><input id="fFriTime" type="number" inputmode="decimal" min="0" step="any"></label>
+      <label class="field"><span>Gruppe (mm)</span><input id="fFriGroup" type="number" inputmode="decimal" min="0" step="any"></label>
+    </fieldset>
+    <h3 class="subhead">Egne målinger</h3>
+    <p class="note" style="margin-top:0">Legg til det du vil følge med på, for eksempel reaksjonstid, antall dobbeltskudd eller tid til første treff. Målinger med samme navn får egen graf under Progresjon.</p>
+    <datalist id="friNames"></datalist>
+    <div id="friCustom"></div>
+    <div class="actions" style="margin-top:8px"><button class="btn ghost small" id="btnFriAdd">Legg til måling</button></div>
+    <h3 class="subhead">Bilde av målet</h3>
+    <div id="friPhoto"></div>
+    <div class="row"><label class="btn ghost small" for="friCam">Legg til bilde</label><button class="btn ghost small hidden" id="btnFriPhotoDel">Fjern bilde</button></div>
+    <input id="friCam" class="hidden" type="file" accept="image/*">
+    <div id="friTotals"></div>
+  </div>
+
+  <!-- DYNAMISK -->
+  <div id="dynSec" class="hidden">
+    <div class="seg" role="group" aria-label="Power factor" id="pfSeg">
+      <button data-pf="minor" aria-pressed="true">Minor</button>
+      <button data-pf="major" aria-pressed="false">Major</button>
+    </div>
+    <p class="note" id="pfNote"></p>
+    <div id="stages"></div>
+    <div class="actions"><button class="btn ghost small" id="btnAddStage">Legg til etappe</button></div>
+    <p class="ai-msg" id="dynMsg" role="status"></p>
+    <div id="dynTotals"></div>
+  </div>
+
+  <!-- FELLES -->
+  <div id="commonSec">
+    <fieldset>
+      <label class="field full"><span>Øvelse</span><input id="fOvelse" list="ovelser"></label>
+      <datalist id="ovelser"></datalist>
+      <label class="field"><span>Dato</span><input id="fDato" type="date"></label>
+      <label class="field"><span>Tid</span><input id="fTid" type="time"></label>
+      <label class="field"><span>Bane</span><select id="fBane"></select></label>
+      <label class="field"><span>Sted</span><input id="fSted" list="steder" placeholder="By eller anlegg"></label>
+      <datalist id="steder"></datalist>
+      <label class="field"><span>Våpen</span><select id="fWeapon"></select></label>
+      <label class="field"><span>Ammunisjon</span><select id="fAmmo"></select></label>
+      <label class="field"><span>Avstand (m)</span><input id="fAvstand" type="number" inputmode="decimal" min="0" step="any"></label>
+      <span></span>
+      <div class="field full"><span>Dagsform</span>
+        <div class="seg dagsform" id="formSeg" role="group" aria-label="Dagsform" style="margin:0">
+          <button data-form="1" aria-pressed="false">1<small>Dårlig</small></button>
+          <button data-form="2" aria-pressed="false">2<small>Svak</small></button>
+          <button data-form="3" aria-pressed="false">3<small>Normal</small></button>
+          <button data-form="4" aria-pressed="false">4<small>God</small></button>
+          <button data-form="5" aria-pressed="false">5<small>Topp</small></button>
+        </div></div>
+      <label class="field full"><span>Kommentar</span><textarea id="fNotes" placeholder="Vær, lys, hva du jobbet med, hva som gikk bra og mindre bra …"></textarea></label>
+    </fieldset>
+    <div class="actions">
+      <button class="btn" id="btnSave">Lagre serie</button>
+      <button class="btn danger hidden" id="btnDelete">Slett serie</button>
+    </div>
+  </div>
+  <input id="auxInput" class="hidden" type="file" accept="image/*">
+</section>
+
+<!-- ================= HISTORIKK ================= -->
+<section id="view-history" class="hidden">
+  <div class="sec-head"><h2>Historikk</h2>
+    <select id="hProg" class="inline" style="max-width:55%;min-height:40px;padding:6px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--surface)">
+      <option value="">Alle program</option><option value="ring">Bane</option><option value="felt">Felt</option><option value="dyn">Dynamisk</option><option value="fri">Fri</option>
+    </select>
+  </div>
+  <div class="list" id="histList"></div>
+</section>
+
+<!-- ================= PROGRESJON ================= -->
+<section id="view-progress" class="hidden">
+  <div class="sec-head"><h2>Progresjon</h2></div>
+  <div class="filters">
+    <select id="pProg" class="inline" aria-label="Program"><option value="ring">Bane</option><option value="felt">Felt</option><option value="dyn">Dynamisk</option><option value="fri">Fri</option></select>
+    <select id="pBane" class="inline" aria-label="Bane"></select>
+    <select id="pOvelse" class="inline" aria-label="Øvelse"></select>
+    <select id="pWeapon" class="inline" aria-label="Våpen"></select>
+    <select id="pAmmo" class="inline" aria-label="Ammunisjon"></select>
+    <select id="pForm" class="inline" aria-label="Dagsform"><option value="">All dagsform</option><option value="1">Dagsform 1</option><option value="2">Dagsform 2</option><option value="3">Dagsform 3</option><option value="4">Dagsform 4</option><option value="5">Dagsform 5</option></select>
+  </div>
+  <div id="progBody"></div>
+</section>
+
+<!-- ================= UTSTYR ================= -->
+<section id="view-gear" class="hidden">
+  <div class="sec-head"><h2>Utstyr og baner</h2></div>
+  <div id="gearBody"></div>
+  <div class="settings">
+    <div class="sec-head"><h2>Innstillinger</h2></div>
+    <h3>Sikkerhetskopi</h3>
+    <p>Alt lagres bare på denne telefonen. Ta en sikkerhetskopi jevnlig, og før du bytter telefon. Filen kan lagres i Filer, iCloud Drive eller sendes til deg selv.</p>
+    <div class="row"><button class="btn small" id="btnExport">Eksporter data</button><label class="btn ghost small" for="importInput">Importer data</label></div>
+    <input id="importInput" class="hidden" type="file" accept="application/json,.json">
+    <p class="note" id="storageInfo"></p>
+    <h3>Tolkning med Claude (valgfritt)</h3>
+    <p>Baneskiver tolkes automatisk på telefonen, uten nett. Vil du at Claude skal telle treff på felt-, minifelt- og dynamiske skiver, eller tolke vanskelige bilder, kan du legge inn en egen API-nøkkel fra console.anthropic.com. Nøkkelen lagres bare på denne telefonen, og bruken faktureres av Anthropic.</p>
+    <div class="keyrow"><input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-…" aria-label="API-nøkkel"><button class="btn small" id="btnKeySave">Lagre</button><button class="btn ghost small" id="btnKeyClear">Fjern</button></div>
+    <p class="note" id="keyState"></p>
+  </div>
+</section>
+</main>
+
+<nav class="tabs" aria-label="Hovedmeny"><div class="sumbar hidden" id="sumBar" role="status" aria-live="polite"></div><div class="tabrow">
+  <button data-tab="new" aria-current="page">Ny serie</button>
+  <button data-tab="history">Historikk</button>
+  <button data-tab="progress">Progresjon</button>
+  <button data-tab="gear">Utstyr</button>
+</div></nav>
+
+<dialog id="dlg"><div class="dlg-body">
+  <h3 id="dlgTitle"></h3>
+  <fieldset id="dlgFields"></fieldset>
+  <p class="ai-msg err" id="dlgErr"></p>
+  <div class="actions">
+    <button class="btn" id="dlgSave">Lagre</button>
+    <button class="btn ghost" id="dlgCancel">Avbryt</button>
+    <button class="btn danger hidden" id="dlgDelete">Slett</button>
+  </div>
+</div></dialog>
+
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const fmt = (n, d = 1) => Number(n || 0).toLocaleString('nb-NO', { maximumFractionDigits: d, minimumFractionDigits: 0 });
+const fmtF = (n, d) => Number(n || 0).toLocaleString('nb-NO', { maximumFractionDigits: d, minimumFractionDigits: d });
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const clone = o => JSON.parse(JSON.stringify(o));
+const PROG_NAME = { ring: 'Bane', felt: 'Felt', dyn: 'Dynamisk', fri: 'Fri' };
+const FELT_TYPE = { feltpistol: 'Feltpistol', minifelt: 'Minifelt', luftminifelt: 'Luftminifelt', feltrifle: 'Felt, rifle', annen: 'Felt' };
+const FORM_NAME = { 1: 'Dårlig', 2: 'Svak', 3: 'Normal', 4: 'God', 5: 'Topp' };
+const POS_OPTS = [['', 'Velg stilling'], ['st2', 'Stående, to hender'], ['st1', 'Stående, én hånd'], ['sitt', 'Sittende'], ['ligg', 'Liggende'], ['annen', 'Annen']];
+const POS_NAME = Object.fromEntries(POS_OPTS.filter(o => o[0]));
+const nowTime = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+const CAM_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+
+/* ---------- Target presets (mm) ---------- */
+const PRESET_TARGETS = [
+  { id: 'gen10', name: 'Standard 10 ringer (uten mål)', rings: 10, outer: 100, ten: 10, x: 0, unitless: true, builtin: true },
+  { id: 'issf-lp10', name: 'ISSF luftpistol 10 m', rings: 10, outer: 155.5, ten: 11.5, x: 5, builtin: true },
+  { id: 'issf-p25', name: 'ISSF pistol 25 m presisjon / 50 m', rings: 10, outer: 500, ten: 50, x: 25, builtin: true },
+  { id: 'issf-r50', name: 'ISSF gevær 50 m', rings: 10, outer: 154.4, ten: 10.4, x: 5, builtin: true },
+  { id: 'issf-r300', name: 'ISSF gevær 300 m', rings: 10, outer: 1000, ten: 100, x: 50, builtin: true },
+];
+
+/* ---------- Prefs (per device) ---------- */
+const prefs = (() => { try { return JSON.parse(localStorage.getItem('skiveboka.prefs') || '{}') || {}; } catch (_) { return {}; } })();
+const savePrefs = () => { try { localStorage.setItem('skiveboka.prefs', JSON.stringify(prefs)); } catch (_) {} };
+
+/* ---------- State ---------- */
+const S = {
+  series: [], loaded: false, eq: { weapons: [], ammo: [], targets: [], ranges: [] },
+  program: (prefs.program === 'mini' ? 'felt' : prefs.program) || 'ring', editingId: null, editingTs: null,
+  src: null, imgW: 0, imgH: 0, center: null, radius: null, hits: [], mode: 'center', zoom: 1, busy: false, snapTarget: null,
+  mini: null, fri: null, dyn: null, dagsform: 0, aiOk: false, aiBusy: false,
+};
+
+/* ---------- Storage ---------- */
+const LS_SERIES = 'skiveboka.series.v1', LS_EQ = 'skiveboka.eq.v1';
+const normEq = e => ({ weapons: Array.isArray(e?.weapons) ? e.weapons : [], ammo: Array.isArray(e?.ammo) ? e.ammo : [], targets: Array.isArray(e?.targets) ? e.targets : [], ranges: Array.isArray(e?.ranges) ? e.ranges : [] });
+const IDB = {
+  db: null,
+  open() {
+    return new Promise((res, rej) => {
+      if (!('indexedDB' in window)) { rej(new Error('no idb')); return; }
+      const r = indexedDB.open('skiveboka', 1);
+      r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('series')) d.createObjectStore('series', { keyPath: 'id' }); if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv'); };
+      r.onsuccess = () => { this.db = r.result; res(this.db); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  run(store, mode, fn) {
+    return new Promise((res, rej) => {
+      const t = this.db.transaction(store, mode), req = fn(t.objectStore(store));
+      t.oncomplete = () => res(req ? req.result : undefined);
+      t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('abort'));
+    });
+  }
+};
+const Store = {
+  kind: 'local', ready: null,
+  init() {
+    this.ready = (async () => {
+      try {
+        await IDB.open(); this.kind = 'idb';
+        // move data saved by an earlier localStorage version, if any
+        const old = this.readLocal();
+        if (old.length) { await IDB.run('series', 'readwrite', st => { old.forEach(o => st.put(o)); return null; }); localStorage.removeItem(LS_SERIES); }
+        const oldEq = localStorage.getItem(LS_EQ);
+        if (oldEq) { await IDB.run('kv', 'readwrite', st => st.put(JSON.parse(oldEq), 'equipment')); localStorage.removeItem(LS_EQ); }
+      } catch (_) { this.kind = 'local'; }
+      if (navigator.storage && navigator.storage.persist) { try { await navigator.storage.persist(); } catch (_) {} }
+      await this.reload();
+    })();
+    return this.ready;
+  },
+  async reload() {
+    if (this.kind === 'idb') {
+      const all = await IDB.run('series', 'readonly', st => st.getAll());
+      S.series = (all || []).map(normSeries).sort((x, y) => y.ts - x.ts);
+      S.eq = normEq(await IDB.run('kv', 'readonly', st => st.get('equipment')));
+    } else {
+      S.series = this.readLocal().map(normSeries);
+      try { S.eq = normEq(JSON.parse(localStorage.getItem(LS_EQ) || '{}')); } catch (_) {}
+    }
+    S.loaded = true; renderAllLists(); updateStorageInfo();
+  },
+  readLocal() { try { const a = JSON.parse(localStorage.getItem(LS_SERIES) || '[]'); return Array.isArray(a) ? a.sort((x, y) => y.ts - x.ts) : []; } catch (_) { return []; } },
+  async putMany(docs) {
+    await this.ready;
+    if (this.kind === 'idb') await IDB.run('series', 'readwrite', st => { docs.forEach(d => st.put(d)); return null; });
+    else { const ids = new Set(docs.map(d => d.id)); const arr = this.readLocal().filter(s => !ids.has(s.id)).concat(docs); localStorage.setItem(LS_SERIES, JSON.stringify(arr)); }
+  },
+  async save(id, doc) { await this.putMany([{ id, ...doc }]); await this.reload(); },
+  async remove(id) {
+    await this.ready;
+    if (this.kind === 'idb') await IDB.run('series', 'readwrite', st => st.delete(id));
+    else localStorage.setItem(LS_SERIES, JSON.stringify(this.readLocal().filter(s => s.id !== id)));
+    await this.reload();
+  },
+  async saveEq(eq) {
+    await this.ready;
+    if (this.kind === 'idb') await IDB.run('kv', 'readwrite', st => st.put(eq, 'equipment'));
+    else localStorage.setItem(LS_EQ, JSON.stringify(eq));
+    await this.reload();
+  }
+};
+async function updateStorageInfo() {
+  const el = $('#storageInfo'); if (!el) return;
+  let t = `${S.series.length} serier lagret.`;
+  try { if (navigator.storage && navigator.storage.estimate) { const e = await navigator.storage.estimate(); if (e.usage) t += ` Bruker ${fmt(e.usage / 1048576, 1)} MB.`; } } catch (_) {}
+  el.textContent = t;
+}
+function normSeries(s) {
+  if (!s.program) s.program = 'ring';
+  if (s.program === 'mini') { s.program = 'felt'; s.feltType = s.feltType || (s.klasse === 'luft' ? 'luftminifelt' : 'minifelt'); }
+  if (s.program === 'felt' && !s.stations && Array.isArray(s.figs)) {
+    const figs = s.figs.slice(0, s.count || s.figs.length);
+    s.stations = figs.map(f => ({ time: null, pos: '', figs: [{ hits: f.hits || 0, inner: f.inner || 0 }] }));
+    s.shots = s.maxShots || 1; s.count = s.stations.length; s.figures = s.count; s.shotsTotal = s.count * s.shots;
+    s.klasse = s.klasse || ''; s.feltType = s.feltType || '';
+  }
+  if (s.program === 'ring' && !s.targetSnap) {
+    const r = s.rings || 10, o = s.diam || 100;
+    s.targetSnap = { name: 'Egendefinert', rings: r, outer: o, ten: o / r, x: 0, unitless: !s.diam };
+    s.xCount = s.xCount || 0; s.totalDec = s.totalDec ?? s.total; s.decimal = false;
+  }
+  return s;
+}
+
+/* ---------- Ring geometry & scoring ---------- */
+function geom(t) {
+  const rings = Math.max(1, Math.min(20, Math.round(t.rings || 10)));
+  const outer = t.outer > 0 ? t.outer : 100;
+  const rTen = Math.min(1, (t.ten > 0 ? t.ten : outer / rings) / outer);
+  const step = rings > 1 ? (1 - rTen) / (rings - 1) : 1;
+  return { rings, outer, rTen, step, rX: t.x > 0 ? t.x / outer : 0, unitless: !!t.unitless };
+}
+function shotScore(d, holeR, g) {
+  const e = Math.max(0, d - holeR);
+  if (e > 1 + 1e-9) return { i: 0, dec: 0, x: false };
+  let i, dec;
+  if (e <= g.rTen) { i = g.rings; dec = g.rings + Math.min(0.9, Math.floor((1 - e / g.rTen) * 10 + 1e-9) / 10); }
+  else {
+    const j = Math.min(g.rings - 1, Math.ceil((e - g.rTen) / g.step - 1e-9));
+    i = g.rings - j;
+    const rb = g.rTen + j * g.step;
+    dec = i + Math.min(0.9, Math.floor((rb - e) / g.step * 10 + 1e-9) / 10);
+  }
+  return { i, dec: Math.round(dec * 10) / 10, x: g.rX > 0 && e <= g.rX };
+}
+function ringStats(rel, g, holeR) {
+  const n = rel.length;
+  const shots = rel.map(p => shotScore(Math.hypot(p.x, p.y), holeR, g));
+  const total = shots.reduce((a, s) => a + s.i, 0);
+  const totalDec = Math.round(shots.reduce((a, s) => a + s.dec, 0) * 10) / 10;
+  const xCount = shots.filter(s => s.x).length;
+  let mpiX = 0, mpiY = 0;
+  if (n) { rel.forEach(p => { mpiX += p.x; mpiY += p.y; }); mpiX /= n; mpiY /= n; }
+  let es = 0;
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) es = Math.max(es, Math.hypot(rel[i].x - rel[j].x, rel[i].y - rel[j].y));
+  const mr = n ? rel.reduce((a, p) => a + Math.hypot(p.x - mpiX, p.y - mpiY), 0) / n : 0;
+  return { n, shots, total, totalDec, xCount, max: n * g.rings, avg: n ? total / n : 0, avgDec: n ? totalDec / n : 0, mpiX, mpiY, es, mr };
+}
+function sizeText(v, g) {
+  if (!g.unitless) { const mm = v * g.outer / 2; return fmt(mm, mm < 20 ? 1 : 0) + ' mm'; }
+  return fmt(v / g.step, 1) + ' ringbr.';
+}
+function mpiText(x, y, g) {
+  const mag = Math.hypot(x, y);
+  if (mag / g.step < 0.3) return 'Sentrert';
+  const parts = [];
+  if (Math.abs(y) > mag * 0.4) parts.push(y < 0 ? 'høyt' : 'lavt');
+  if (Math.abs(x) > mag * 0.4) parts.push(x < 0 ? 'til venstre' : 'til høyre');
+  return sizeText(mag, g) + ' ' + parts.join(' ');
+}
+
+/* ---------- Felt & dynamisk scoring ---------- */
+function feltCalc(f) {
+  const figs = f.figs.slice(0, f.count);
+  const figuresHit = figs.filter(x => x.hits > 0).length;
+  const hits = figs.reduce((a, x) => a + x.hits, 0);
+  const inner = figs.reduce((a, x) => a + x.inner, 0);
+  return { figuresHit, hits, inner, points: figuresHit + hits, maxPoints: f.count * (1 + f.maxShots), hitPct: f.count ? hits / (f.count * f.maxShots) * 100 : 0 };
+}
+function miniCalc(m) {
+  const st = m.stations.slice(0, m.count);
+  const per = st.map(s => {
+    const fh = s.figs.filter(f => f.hits > 0).length, h = s.figs.reduce((a, f) => a + f.hits, 0), inn = s.figs.reduce((a, f) => a + f.inner, 0);
+    return { fh, h, inn, p: fh + h, mx: s.figs.length + m.shots };
+  });
+  const sum = k => per.reduce((a, r) => a + r[k], 0);
+  const shots = st.length * m.shots, hits = sum('h');
+  return { per, points: sum('p'), maxPoints: sum('mx'), hits, inner: sum('inn'), figuresHit: sum('fh'), figures: st.reduce((a, s) => a + s.figs.length, 0), shotsTotal: shots, hitPct: shots ? hits / shots * 100 : 0 };
+}
+const zoneVal = pf => ({ A: 5, C: pf === 'major' ? 4 : 3, D: pf === 'major' ? 2 : 1 });
+function stageCalc(st, pf) {
+  const z = zoneVal(pf);
+  const raw = st.A * 5 + st.C * z.C + st.D * z.D;
+  const pen = 10 * (st.M + st.NS + st.P);
+  const pts = Math.max(0, raw - pen);
+  const hf = st.time > 0 ? pts / st.time : 0;
+  const shots = st.A + st.C + st.D + st.M;
+  const sp = st.winHF > 0 && st.time > 0 ? Math.min(1, hf / st.winHF) * (st.maxPts > 0 ? st.maxPts : 100) : null;
+  return { raw, pen, pts, hf, shots, acc: shots ? raw / (5 * shots) * 100 : 0, sp };
+}
+function dynCalc(d) {
+  const per = d.stages.map(s => stageCalc(s, d.pf));
+  const pts = per.reduce((a, r) => a + r.pts, 0);
+  const time = d.stages.reduce((a, s) => a + (s.time || 0), 0);
+  const raw = per.reduce((a, r) => a + r.raw, 0), shots = per.reduce((a, r) => a + r.shots, 0);
+  const sps = per.filter(r => r.sp != null);
+  return { per, pts, time, hf: time > 0 ? pts / time : 0, acc: shots ? raw / (5 * shots) * 100 : 0, stagePts: sps.length ? sps.reduce((a, r) => a + r.sp, 0) : null,
+    A: d.stages.reduce((a, s) => a + s.A, 0), C: d.stages.reduce((a, s) => a + s.C, 0), D: d.stages.reduce((a, s) => a + s.D, 0),
+    M: d.stages.reduce((a, s) => a + s.M, 0), NS: d.stages.reduce((a, s) => a + s.NS, 0), P: d.stages.reduce((a, s) => a + s.P, 0) };
+}
+const newStage = i => ({ name: 'Etappe ' + i, A: 0, C: 0, D: 0, M: 0, NS: 0, P: 0, time: 0, winHF: 0, maxPts: 100 });
+
+/* ---------- Equipment helpers ---------- */
+const allTargets = () => PRESET_TARGETS.concat(S.eq.targets);
+const findW = id => S.eq.weapons.find(w => w.id === id);
+const findA = id => S.eq.ammo.find(a => a.id === id);
+const findR = id => S.eq.ranges.find(r => r.id === id);
+function currentTarget() {
+  const v = $('#fTarget').value;
+  if (v === '__snap' && S.snapTarget) return S.snapTarget;
+  return allTargets().find(t => t.id === v) || PRESET_TARGETS[0];
+}
+function fillSelect(sel, items, emptyLabel, newLabel) {
+  const cur = sel.value;
+  sel.innerHTML = (emptyLabel ? `<option value="">${esc(emptyLabel)}</option>` : '') +
+    items.map(i => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join('') +
+    (newLabel ? `<option value="__new">${esc(newLabel)}</option>` : '');
+  if ([...sel.options].some(o => o.value === cur) && cur !== '__new') sel.value = cur;
+}
+function fillEquipSelects() {
+  fillSelect($('#fWeapon'), S.eq.weapons, 'Ikke valgt', '+ Legg til våpen …');
+  fillSelect($('#fBane'), S.eq.ranges, 'Ikke valgt', '+ Legg til bane …');
+  fillSelect($('#fAmmo'), S.eq.ammo.map(a => ({ id: a.id, name: a.name + (a.kaliber ? ' (' + a.kaliber + ')' : '') })), 'Ikke valgt', '+ Legg til ammunisjon …');
+  const ts = $('#fTarget'), cur = ts.value;
+  const items = allTargets().slice();
+  if (S.snapTarget) items.push({ id: '__snap', name: 'Lagret: ' + S.snapTarget.name });
+  fillSelect(ts, items, null, '+ Legg til skive …');
+  if (!cur || cur === '__new') ts.value = S.snapTarget ? '__snap' : (allTargets().some(t => t.id === prefs.targetId) ? prefs.targetId : 'gen10');
+}
+
+/* ---------- Image helpers ---------- */
+function canvasFrom(img, maxSide) {
+  const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+  const s = Math.min(1, maxSide / Math.max(w0, h0));
+  const c = document.createElement('canvas'); c.width = Math.round(w0 * s); c.height = Math.round(h0 * s);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c;
+}
+const loadImage = src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+const toBlob = (c, q) => new Promise(r => c.toBlob(r, 'image/jpeg', q));
+async function fileToBlob(file, max = 1200) {
+  const url = URL.createObjectURL(file);
+  try { const im = await loadImage(url); return await toBlob(canvasFrom(im, max), 0.85); } finally { URL.revokeObjectURL(url); }
+}
+let pickResolve = null;
+function pickImage() {
+  return new Promise(res => { pickResolve = res; const inp = $('#auxInput'); inp.value = ''; inp.click(); });
+}
+$('#auxInput').addEventListener('change', e => { const f = e.target.files[0]; if (pickResolve) { pickResolve(f || null); pickResolve = null; } });
+$('#auxInput').addEventListener('cancel', () => { if (pickResolve) { pickResolve(null); pickResolve = null; } });
+
+/* ---------- On-device target detection ---------- */
+// On-device target detection. Input: grayscale Uint8Array (w*h). Output in pixel coords.
+function circleFit(P) {
+  const n = P.length; if (n < 10) return null;
+  let mx = 0, my = 0; P.forEach(p => { mx += p[0]; my += p[1]; }); mx /= n; my /= n;
+  let Suu = 0, Svv = 0, Suv = 0, Suuu = 0, Svvv = 0, Suvv = 0, Svuu = 0;
+  P.forEach(p => { const u = p[0] - mx, v = p[1] - my; Suu += u * u; Svv += v * v; Suv += u * v; Suuu += u * u * u; Svvv += v * v * v; Suvv += u * v * v; Svuu += v * u * u; });
+  const det = Suu * Svv - Suv * Suv; if (Math.abs(det) < 1e-9) return null;
+  const b1 = (Suuu + Suvv) / 2, b2 = (Svvv + Svuu) / 2;
+  const uc = (b1 * Svv - b2 * Suv) / det, vc = (Suu * b2 - Suv * b1) / det;
+  return { x: uc + mx, y: vc + my, r: Math.sqrt(uc * uc + vc * vc + (Suu + Svv) / n) };
+}
+function detectTarget(G, w, h) {
+  const N = w * h, at = (x, y) => G[y * w + x];
+  // --- levels
+  const hist = new Uint32Array(256); for (let i = 0; i < N; i++) hist[G[i]]++;
+  const pct = p => { let c = 0, t = N * p; for (let v = 0; v < 256; v++) { c += hist[v]; if (c >= t) return v; } return 255; };
+  const white = pct(0.9), dark = pct(0.03);
+  const thr = dark + (white - dark) * 0.45;
+  // morphology helpers (square kernel, separable)
+  const morph = (src, rad, dil) => {
+    const tmp = new Uint8Array(N), out = new Uint8Array(N);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let v = dil ? 0 : 1; for (let d = -rad; d <= rad; d++) { const xx = x + d; const s = xx < 0 || xx >= w ? 0 : src[y * w + xx]; if (dil ? s : !s) { v = dil ? 1 : 0; break; } } tmp[y * w + x] = v; }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let v = dil ? 0 : 1; for (let d = -rad; d <= rad; d++) { const yy = y + d; const s = yy < 0 || yy >= h ? 0 : tmp[yy * w + x]; if (dil ? s : !s) { v = dil ? 1 : 0; break; } } out[y * w + x] = v; }
+    return out;
+  };
+  // dark mask, closed to bridge thin light ring lines inside the aiming mark
+  let D = new Uint8Array(N); for (let i = 0; i < N; i++) D[i] = G[i] < thr ? 1 : 0;
+  const cr = Math.max(2, Math.round(Math.max(w, h) / 300));
+  D = morph(morph(D, cr, true), cr, false);
+  // --- dark components, pick largest near-centre roundish blob = aiming mark
+  const lab = new Int32Array(N).fill(-1); const comps = [];
+  const stack = new Int32Array(N);
+  for (let i = 0; i < N; i++) {
+    if (lab[i] !== -1 || !D[i]) continue;
+    let sp = 0; stack[sp++] = i; lab[i] = comps.length;
+    let area = 0, sx = 0, sy = 0, x0 = w, x1 = 0, y0 = h, y1 = 0;
+    while (sp) {
+      const j = stack[--sp], x = j % w, y = (j / w) | 0;
+      area++; sx += x; sy += y; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      const nb = [x > 0 ? j - 1 : -1, x < w - 1 ? j + 1 : -1, y > 0 ? j - w : -1, y < h - 1 ? j + w : -1];
+      for (const k of nb) if (k >= 0 && lab[k] === -1 && D[k]) { lab[k] = comps.length; stack[sp++] = k; }
+    }
+    comps.push({ area, cx: sx / area, cy: sy / area, x0, x1, y0, y1 });
+  }
+  let best = null, bestScore = 0;
+  for (const c of comps) {
+    const bw = c.x1 - c.x0 + 1, bh = c.y1 - c.y0 + 1;
+    if (c.area < N * 0.004) continue;
+    const ar = Math.max(bw, bh) / Math.min(bw, bh); if (ar > 1.6) continue;
+    const fill = c.area / (Math.PI * bw * bh / 4); if (fill < 0.6) continue;
+    const dc = Math.hypot(c.cx - w / 2, c.cy - h / 2) / Math.hypot(w, h);
+    const score = c.area * fill * (1 - dc);
+    if (score > bestScore) { bestScore = score; best = c; }
+  }
+  if (!best) return null;
+  // --- refine centre & radius by rays (median edge distance), iterate twice
+  let cx = best.cx, cy = best.cy, bR = 0;
+  for (let it = 0; it < 3; it++) {
+    const rs = [], pts = [];
+    const maxr = Math.max(best.x1 - best.x0, best.y1 - best.y0);
+    for (let a = 0; a < 180; a++) {
+      const t = a / 180 * 2 * Math.PI, dx = Math.cos(t), dy = Math.sin(t);
+      // walk outward; edge = last r where a run of 4 consecutive non-dark begins
+      let r = 2, run = 0, edge = 0;
+      for (; r < maxr; r++) {
+        const x = Math.round(cx + dx * r), y = Math.round(cy + dy * r);
+        if (x < 0 || y < 0 || x >= w || y >= h) break;
+        if (!D[y * w + x]) { run++; if (run >= Math.max(4, maxr * 0.04)) { edge = r - run; break; } } else run = 0;
+      }
+      if (edge > 0) { rs.push(edge); pts.push([cx + dx * edge, cy + dy * edge]); }
+    }
+    if (rs.length < 40) break;
+    const sorted = rs.slice().sort((a, b) => a - b); bR = sorted[sorted.length >> 1];
+    // centre = mean of edge points that are near median radius (exclude holes protruding)
+    const P = pts.filter((p, i) => Math.abs(rs[i] - bR) < bR * 0.06);
+    const fit = circleFit(P); if (fit && Math.hypot(fit.x - cx, fit.y - cy) < bR * 0.3) { cx = fit.x; cy = fit.y; bR = fit.r; }
+  }
+  // --- radial median profile
+  const maxR = Math.ceil(Math.hypot(w, h) / 2);
+  const NA = 360, prof = new Float32Array(maxR).fill(NaN), valid = new Float32Array(maxR);
+  const buf = new Float32Array(NA);
+  for (let r = 0; r < maxR; r++) {
+    let n = 0;
+    for (let a = 0; a < NA; a++) {
+      const t = a / NA * 2 * Math.PI, x = Math.round(cx + Math.cos(t) * r), y = Math.round(cy + Math.sin(t) * r);
+      if (x < 0 || y < 0 || x >= w || y >= h) continue; buf[n++] = G[y * w + x];
+    }
+    valid[r] = n / NA;
+    if (n) { const s = Array.from(buf.subarray(0, n)).sort((a, b) => a - b); prof[r] = s[n >> 1]; }
+  }
+  // --- outer ring: outermost dark dip in profile outside black, with >=70% valid angles
+  const contrast = white - dark;
+  let outerR = 0;
+  const smooth = r => prof[r];
+  for (let r = Math.round(bR * 1.05); r < maxR - 2; r++) {
+    if (valid[r] < 0.7) break;
+    const v = smooth(r);
+    // local min that's notably darker than neighbourhood
+    let nb = 0, cnt = 0; for (let d = 3; d <= 6; d++) { if (r + d < maxR && valid[r + d] >= 0.7) { nb += prof[r + d]; cnt++; } if (r - d > 0) { nb += prof[r - d]; cnt++; } }
+    nb /= cnt || 1;
+    if (v <= prof[r - 1] && v <= prof[r + 1] && nb - v > contrast * 0.12) outerR = r;
+  }
+  // --- anomaly map
+  const A = new Uint8Array(N);
+  const aT = contrast * 0.33;
+  const lim = (outerR || bR * 2.5) * 1.04;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const r = Math.round(Math.hypot(x - cx, y - cy)); if (r >= lim || r >= maxR || isNaN(prof[r])) continue;
+    const gr = r > 2 && r < maxR - 3 ? Math.abs(prof[r + 2] - prof[r - 2]) : 0;
+    if (gr > contrast * 0.3) continue;
+    if (Math.abs(G[y * w + x] - prof[r]) > aT) A[y * w + x] = 1;
+  }
+  const scale = Math.max(1, Math.round(bR / 60));
+  let M = morph(morph(A, 2 * scale, true), 2 * scale, false); // close
+  M = morph(morph(M, 2 * scale, false), 2 * scale, true); // open
+  // components
+  const lab2 = new Int32Array(N).fill(-1), blobs = [];
+  for (let i = 0; i < N; i++) {
+    if (!M[i] || lab2[i] !== -1) continue;
+    let sp = 0; stack[sp++] = i; lab2[i] = blobs.length; let area = 0, sx = 0, sy = 0, x0 = w, x1 = 0, y0 = h, y1 = 0;
+    while (sp) { const j = stack[--sp], x = j % w, y = (j / w) | 0; area++; sx += x; sy += y; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      const nb = [x > 0 ? j - 1 : -1, x < w - 1 ? j + 1 : -1, y > 0 ? j - w : -1, y < h - 1 ? j + w : -1];
+      for (const k of nb) if (k >= 0 && M[k] && lab2[k] === -1) { lab2[k] = blobs.length; stack[sp++] = k; } }
+    blobs.push({ area, x: sx / area, y: sy / area, bw: x1 - x0 + 1, bh: y1 - y0 + 1, x0, x1, y0, y1 });
+  }
+  const R0 = outerR || bR * 2.5;
+  let frags = blobs.filter(b => b.area >= Math.pow(R0 * 0.006, 2) * Math.PI && Math.max(b.bw, b.bh) < R0 * 0.2);
+  // merge fragments of the same hole (torn rim split by the aiming mark)
+  const gap = R0 * 0.025;
+  let merged = true;
+  while (merged) {
+    merged = false;
+    outer: for (let i = 0; i < frags.length; i++) for (let j = i + 1; j < frags.length; j++) {
+      const a = frags[i], b = frags[j];
+      const dx = Math.max(0, Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1)), dy = Math.max(0, Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1));
+      const nx0 = Math.min(a.x0, b.x0), nx1 = Math.max(a.x1, b.x1), ny0 = Math.min(a.y0, b.y0), ny1 = Math.max(a.y1, b.y1);
+      if (Math.hypot(dx, dy) <= gap && Math.max(nx1 - nx0, ny1 - ny0) < R0 * 0.16) {
+        frags[i] = { area: a.area + b.area, x0: nx0, x1: nx1, y0: ny0, y1: ny1 }; frags.splice(j, 1); merged = true; break outer;
+      }
+    }
+  }
+  frags.forEach(b => { b.bw = b.x1 - b.x0 + 1; b.bh = b.y1 - b.y0 + 1; b.x = (b.x0 + b.x1) / 2; b.y = (b.y0 + b.y1) / 2; });
+  const minA = Math.pow(R0 * 0.014, 2) * Math.PI;
+  let cands = frags.filter(b => b.area >= minA && Math.max(b.bw, b.bh) / Math.min(b.bw, b.bh) < 2.4);
+  // printed ring numbers repeat at the same radius on the four axes: check the anomaly map at rotated positions
+  const isAxis = b => { const t = Math.atan2(b.y - cy, b.x - cx); const m = ((t % (Math.PI / 2)) + Math.PI / 2) % (Math.PI / 2); return Math.min(m, Math.PI / 2 - m) < 0.14; };
+  const hasMark = (tx, ty) => { const rr = Math.max(3, R0 * 0.035); let c = 0;
+    for (let y = Math.max(0, Math.round(ty - rr)); y <= Math.min(h - 1, Math.round(ty + rr)); y++) for (let x = Math.max(0, Math.round(tx - rr)); x <= Math.min(w - 1, Math.round(tx + rr)); x++) c += A[y * w + x];
+    return c > rr * rr * 0.15; };
+  cands = cands.filter(b => {
+    if (!isAxis(b)) return true;
+    const dx = b.x - cx, dy = b.y - cy;
+    const n = [[0, 1], [-1, 0], [0, -1]].filter(([c, s0]) => hasMark(cx + dx * c - dy * s0, cy + dx * s0 + dy * c)).length;
+    return n < 2;
+  });
+  // refine each hole to the centroid of its dark core (pixels enclosed by the torn rim)
+  cands.forEach(b => {
+    const ex = Math.round(Math.max(b.bw, b.bh) * 0.15);
+    const X0 = Math.max(0, b.x0 - ex), X1 = Math.min(w - 1, b.x1 + ex), Y0 = Math.max(0, b.y0 - ex), Y1 = Math.min(h - 1, b.y1 + ex);
+    let sx = 0, sy = 0, n = 0;
+    for (let y = Y0; y <= Y1; y++) for (let x = X0; x <= X1; x++) {
+      if (G[y * w + x] >= thr) continue;
+      let enc = A[y * w + x] ? 4 : 0;
+      if (!enc) {
+        for (let xx = x - 1; xx >= X0; xx--) if (A[y * w + xx]) { enc++; break; }
+        for (let xx = x + 1; xx <= X1; xx++) if (A[y * w + xx]) { enc++; break; }
+        for (let yy = y - 1; yy >= Y0; yy--) if (A[yy * w + x]) { enc++; break; }
+        for (let yy = y + 1; yy <= Y1; yy++) if (A[yy * w + x]) { enc++; break; }
+      }
+      if (enc >= 4) { sx += x; sy += y; n++; }
+    }
+    if (n > b.area * 0.08) { b.x = sx / n; b.y = sy / n; }
+  });
+  return { center: { x: cx, y: cy }, blackR: bR, outerR: R0, hits: cands.map(b => ({ x: b.x, y: b.y, area: b.area })) };
+}
+
+
+/* ---------- Claude (optional, own API key) ---------- */
+const KEY_LS = 'skiveboka.apikey';
+const apiKey = () => { try { return localStorage.getItem(KEY_LS) || ''; } catch (_) { return ''; } };
+function refreshAi() {
+  S.aiOk = !!apiKey();
+  $('#btnClaude').hidden = !S.aiOk;
+  $('#keyState').textContent = S.aiOk ? 'API-nøkkel er lagt inn.' : 'Ingen API-nøkkel. Appen fungerer fullt ut uten.';
+  renderFelt(); renderMini(); renderDyn();
+}
+const blobToB64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+async function claudeJSON(prompt, blob) {
+  const key = apiKey(); if (!key) throw { code: 'no_key' };
+  const data = await blobToB64(blob);
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-5-5', max_tokens: 2000, messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } },
+        { type: 'text', text: prompt + '\nReply with the JSON only, no other text.' } ] }] })
+    });
+  } catch (_) { throw { code: 'network' }; }
+  if (res.status === 401 || res.status === 403) throw { code: 'bad_key' };
+  if (res.status === 429 || res.status === 529) throw { code: 'rate_limited' };
+  if (!res.ok) throw { code: 'http', status: res.status };
+  const out = await res.json();
+  const text = (out.content || []).filter(c => c.type === 'text').map(c => c.text).join('\n').replace(/```json|```/g, '');
+  const m = text.match(/\{[\s\S]*\}/); if (!m) throw { code: 'invalid_json' };
+  try { return JSON.parse(m[0]); } catch (_) { throw { code: 'invalid_json' }; }
+}
+$('#btnKeySave').addEventListener('click', () => {
+  const v = $('#apiKey').value.trim(); if (!v) { toast('Lim inn nøkkelen først.'); return; }
+  try { localStorage.setItem(KEY_LS, v); } catch (_) {}
+  $('#apiKey').value = ''; refreshAi(); toast('API-nøkkel lagret');
+});
+$('#btnKeyClear').addEventListener('click', () => { try { localStorage.removeItem(KEY_LS); } catch (_) {} refreshAi(); toast('API-nøkkel fjernet'); });
+function aiErrText(e) {
+  const code = e && e.code;
+  return code === 'no_key' ? 'Legg inn en API-nøkkel under Utstyr for å bruke Claude.'
+    : code === 'bad_key' ? 'API-nøkkelen ble avvist. Sjekk den under Utstyr.'
+    : code === 'network' ? 'Ingen nettforbindelse. Registrer manuelt, eller prøv igjen senere.'
+    : code === 'not_granted' ? 'Claude fikk ikke tilgang. Registrer manuelt.'
+    : code === 'rate_limited' ? 'For mange forespørsler akkurat nå. Vent litt og prøv igjen.'
+    : code === 'invalid_json' ? 'Claude ga et uklart svar. Prøv igjen, eller registrer manuelt.'
+    : code === 'cancelled' ? '' : 'Tolkningen feilet. Registrer manuelt.';
+}
+
+/* ================= RING EDITOR ================= */
+function setWorkImage(c) {
+  S.src = c; S.imgW = c.width; S.imgH = c.height;
+  const cv = $('#cv'); cv.width = S.imgW; cv.height = S.imgH;
+  $('#startPane').classList.add('hidden'); $('#editPane').classList.remove('hidden');
+  updateSections(); setZoom(1); draw(); updateRing();
+}
+async function onFile(file) {
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  try {
+    const im = await loadImage(url);
+    S.center = null; S.radius = null; S.hits = []; setMode('center');
+    setWorkImage(canvasFrom(im, 1400));
+    runDetect(true);
+  } catch (_) { toast('Kunne ikke lese bildet. Prøv et annet bilde.'); }
+  finally { URL.revokeObjectURL(url); }
+}
+function resetRing() {
+  S.src = null; S.center = null; S.radius = null; S.hits = []; S.snapTarget = null; setBusy(false);
+  $('#editPane').classList.add('hidden'); $('#startPane').classList.remove('hidden');
+  $('#aiMsg').textContent = ''; setMode('center');
+}
+function holeR() {
+  const t = currentTarget(); if (t.unitless) return 0;
+  const hd = num($('#fHole').value); return hd > 0 ? hd / geom(t).outer : 0;
+}
+function draw() {
+  if (!S.src) return;
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(S.src, 0, 0);
+  const k = S.imgW / (cv.getBoundingClientRect().width || S.imgW);
+  const hitCol = cssVar('--hit') || '#FF5F0F', mpiCol = cssVar('--mpi') || '#0091C7';
+  const g = geom(currentTarget());
+  if (S.center && S.radius) {
+    for (let j = 0; j < g.rings; j++) {
+      ctx.beginPath(); ctx.arc(S.center.x, S.center.y, S.radius * (g.rTen + j * g.step), 0, Math.PI * 2);
+      ctx.strokeStyle = j === g.rings - 1 ? '#FFD400' : 'rgba(255,212,0,.6)'; ctx.lineWidth = (j === g.rings - 1 ? 2.5 : 1.2) * k; ctx.stroke();
+    }
+    if (g.rX > 0) {
+      ctx.setLineDash([4 * k, 3 * k]); ctx.beginPath(); ctx.arc(S.center.x, S.center.y, S.radius * g.rX, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFD400'; ctx.lineWidth = 1.2 * k; ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  if (S.center) {
+    const L = 12 * k; ctx.strokeStyle = '#FFD400'; ctx.lineWidth = 2 * k;
+    ctx.beginPath(); ctx.moveTo(S.center.x - L, S.center.y); ctx.lineTo(S.center.x + L, S.center.y);
+    ctx.moveTo(S.center.x, S.center.y - L); ctx.lineTo(S.center.x, S.center.y + L); ctx.stroke();
+  }
+  const hr = S.radius ? holeR() * S.radius : 0;
+  S.hits.forEach((h, i) => {
+    if (hr > 9 * k) { ctx.beginPath(); ctx.arc(h.x, h.y, hr, 0, Math.PI * 2); ctx.strokeStyle = hitCol; ctx.lineWidth = 2 * k; ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(h.x, h.y, 8 * k, 0, Math.PI * 2);
+    ctx.fillStyle = hitCol; ctx.fill(); ctx.lineWidth = 2 * k; ctx.strokeStyle = '#fff'; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${10 * k}px Arial, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), h.x, h.y + 0.5 * k);
+  });
+  if (S.hits.length >= 2) {
+    let mx = 0, my = 0; S.hits.forEach(h => { mx += h.x; my += h.y; }); mx /= S.hits.length; my /= S.hits.length;
+    const d = 9 * k;
+    ctx.beginPath(); ctx.moveTo(mx, my - d); ctx.lineTo(mx + d, my); ctx.lineTo(mx, my + d); ctx.lineTo(mx - d, my); ctx.closePath();
+    ctx.fillStyle = mpiCol; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * k; ctx.stroke();
+  }
+}
+function setMode(m) { S.mode = m; $$('#modeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m))); updateRing(); }
+function setZoom(z) { S.zoom = z; $('#zoom').value = z; $('#cv').style.width = (z * 100) + '%'; requestAnimationFrame(draw); }
+function setBusy(on) { S.busy = on; $('#busy').classList.toggle('hidden', !on); }
+$('#cv').addEventListener('click', e => {
+  if (S.busy) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  const p = { x: (e.clientX - r.left) / r.width * S.imgW, y: (e.clientY - r.top) / r.height * S.imgH };
+  const k = S.imgW / r.width;
+  if (S.mode === 'center') { S.center = p; setMode(S.radius ? 'hits' : 'edge'); }
+  else if (S.mode === 'edge') { if (!S.center) { setMode('center'); return; } S.radius = Math.hypot(p.x - S.center.x, p.y - S.center.y); setMode('hits'); }
+  else { const idx = S.hits.findIndex(h => Math.hypot(h.x - p.x, h.y - p.y) < 14 * k); if (idx >= 0) S.hits.splice(idx, 1); else S.hits.push(p); }
+  draw(); updateRing();
+});
+$$('#modeSeg button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+$('#zoom').addEventListener('input', e => setZoom(parseFloat(e.target.value)));
+$('#btnUndo').addEventListener('click', () => { S.hits.pop(); draw(); updateRing(); });
+$('#btnNewPhoto').addEventListener('click', () => { if (!S.hits.length || confirm('Forkaste dette bildet og markeringene?')) { const keepEdit = S.editingId; resetRing(); if (keepEdit) toast('Ta et nytt bilde av skiva'); updateSections(); } });
+$('#fHole').addEventListener('input', () => { draw(); updateRing(); });
+$('#fDecimal').addEventListener('change', () => { prefs.decimal = $('#fDecimal').checked; savePrefs(); updateRing(); });
+window.addEventListener('resize', () => requestAnimationFrame(draw));
+$('#camInput').addEventListener('change', e => { onFile(e.target.files[0]); e.target.value = ''; });
+$('#fileInput').addEventListener('change', e => { onFile(e.target.files[0]); e.target.value = ''; });
+
+const HINTS = { center: 'Trykk midt i blinken.', edge: 'Trykk på ytterkanten av den ytterste ringen som gir poeng.', hits: 'Trykk på hvert treff. Trykk på et treff igjen for å fjerne det.' };
+function relHits() {
+  if (!S.center || !S.radius) return null;
+  return S.hits.map(h => ({ x: (h.x - S.center.x) / S.radius, y: (h.y - S.center.y) / S.radius }));
+}
+function updateRing() {
+  $('#hint').textContent = HINTS[S.mode];
+  $('#btnUndo').disabled = !S.hits.length;
+  const t = currentTarget(), g = geom(t), hr = holeR();
+  $('#ruleNote').textContent = t.unitless
+    ? 'Velg en skive med mål i mm for å bruke strekregelen (berøring av høyere verdi teller) og innerblink.'
+    : hr > 0 ? 'Strekregelen brukes: et hull som berører streken til høyere verdi, får den høyeste verdien.'
+    : 'Legg inn kulediameter for å bruke strekregelen.';
+  const rel = relHits(), box = $('#scoreBox');
+  if (!rel) { box.innerHTML = '<p class="placeholder">Marker senter og ytterring for å regne ut poeng.</p>'; return; }
+  if (!rel.length) { box.innerHTML = '<p class="placeholder">Marker treffene for å se poeng og gruppe.</p>'; return; }
+  const st = ringStats(rel, g, hr), dec = $('#fDecimal').checked;
+  const shotsSorted = st.shots.slice().sort((a, b) => b.dec - a.dec);
+  box.innerHTML = `
+    <div class="score">
+      <div class="big">${dec ? fmtF(st.totalDec, 1) : st.total}<small>/${dec ? fmtF(st.max + st.n * 0.9, 1) : st.max}</small>${g.rX > 0 ? `<span class="unit">${st.xCount} innerblink${st.xCount === 1 ? '' : 'er'}</span>` : ''}</div>
+      <dl>
+        <dt>Skudd</dt><dd>${st.n}</dd>
+        <dt>Snitt</dt><dd>${fmtF(dec ? st.avgDec : st.avg, 2)} per skudd</dd>
+        ${dec ? `<dt>Heltall</dt><dd>${st.total}</dd>` : ''}
+        <dt>Gruppe</dt><dd>${st.n > 1 ? sizeText(st.es, g) : '–'}</dd>
+        <dt>Treffpunkt</dt><dd>${st.n > 1 ? esc(mpiText(st.mpiX, st.mpiY, g)) : '–'}</dd>
+      </dl>
+    </div>
+    <div class="shots">${shotsSorted.map(s => `<span class="${s.x ? 'x' : ''}">${dec ? fmtF(s.dec, 1) : s.i}${s.x ? '<sup>x</sup>' : ''}</span>`).join('')}</div>`;
+}
+
+$('#btnAI').addEventListener('click', () => {
+  if (S.hits.length && !confirm('Tolke bildet på nytt? Markeringene dine blir erstattet.')) return;
+  runDetect(false);
+});
+$('#btnClaude').addEventListener('click', () => {
+  if (S.hits.length && !confirm('Tolke bildet med Claude? Markeringene dine blir erstattet.')) return;
+  runClaude();
+});
+async function runDetect(auto) {
+  const msg = $('#aiMsg');
+  if (!S.src) return;
+  msg.className = 'ai-msg'; setBusy(true);
+  await new Promise(r => setTimeout(r, 40));
+  try {
+    const c = canvasFrom(S.src, 900), cw = c.width, ch = c.height;
+    const d = c.getContext('2d').getImageData(0, 0, cw, ch).data, G = new Uint8Array(cw * ch);
+    for (let i = 0; i < G.length; i++) G[i] = 0.299 * d[4 * i] + 0.587 * d[4 * i + 1] + 0.114 * d[4 * i + 2];
+    const r = detectTarget(G, cw, ch), k = S.imgW / cw;
+    if (!r) {
+      S.center = null; S.radius = null; S.hits = []; setMode('center');
+      msg.textContent = 'Fant ikke blinken automatisk. Marker senter, ytterring og treff selv.' + (S.aiOk ? ' Du kan også prøve «Tolk med Claude».' : '');
+    } else {
+      S.center = { x: r.center.x * k, y: r.center.y * k }; S.radius = r.outerR * k;
+      S.hits = r.hits.map(h => ({ x: h.x * k, y: h.y * k })); setMode('hits');
+      msg.textContent = `Fant ${S.hits.length} treff. Sjekk at de gule ringene ligger over skivas ringer, og trykk på bildet for å legge til eller fjerne treff.`;
+    }
+  } catch (e) {
+    msg.className = 'ai-msg err'; msg.textContent = 'Automatisk tolkning feilet. Marker senter, ytterring og treff selv.';
+  } finally { setBusy(false); draw(); updateRing(); }
+}
+async function runClaude() {
+  const btn = $('#btnClaude'), msg = $('#aiMsg');
+  if (!S.src) return;
+  msg.className = 'ai-msg';
+  const srcAtStart = S.src;
+  btn.disabled = true; setBusy(true);
+  msg.textContent = 'Claude tolker skiva. Det tar gjerne 20–60 sekunder.';
+  try {
+    const blob = await toBlob(canvasFrom(S.src, 1200), 0.85);
+    const prompt =
+`You are analysing a photo of a paper shooting target with concentric scoring rings.
+Use a coordinate system where x goes 0–1000 across the image width and y goes 0–1000 down the image height.
+Find:
+1. "center": the centre of the ring system.
+2. "outerRadius": the radius of the OUTERMOST scoring ring (the edge of ring 1), expressed in the x-scale (fraction of image width × 1000).
+3. "hits": the centre of every bullet hole. Look carefully inside the black aiming mark too, where holes show as small light or torn spots. Do not count printed numbers, ring lines or old holes covered by pasters. Where two holes overlap, list both.
+4. "note": one short sentence in Norwegian describing confidence or anything unclear.
+The photo may be taken at a slight angle or with uneven light; still give your best estimate.
+Reply with only JSON, e.g. {"center":{"x":500,"y":480},"outerRadius":420,"hits":[{"x":512,"y":470}],"note":"..."}`;
+    const out = await claudeJSON(prompt, blob);
+    if (S.src !== srcAtStart) return;
+    const sx = S.imgW / 1000, sy = S.imgH / 1000;
+    if (out && out.center && Number.isFinite(+out.center.x) && Number.isFinite(+out.center.y) && +out.outerRadius > 0) {
+      S.center = { x: +out.center.x * sx, y: +out.center.y * sy }; S.radius = +out.outerRadius * sx;
+    } else { S.center = null; S.radius = null; }
+    const hits = Array.isArray(out && out.hits) ? out.hits.filter(h => Number.isFinite(+h.x) && Number.isFinite(+h.y)) : [];
+    S.hits = hits.map(h => ({ x: +h.x * sx, y: +h.y * sy }));
+    const calibrated = !!(S.center && S.radius);
+    setMode(calibrated ? 'hits' : 'center'); draw(); updateRing();
+    msg.textContent = (calibrated ? `Fant ${S.hits.length} treff. Trykk på bildet for å legge til eller fjerne treff hvis noe er feil.`
+      : 'Fant ikke ringene sikkert. Marker senter og ytterring selv.') + (out && out.note ? ' ' + String(out.note) : '');
+  } catch (e) {
+    if (S.src !== srcAtStart) return;
+    msg.className = 'ai-msg err'; msg.textContent = aiErrText(e);
+  } finally { btn.disabled = false; if (S.src === srcAtStart) setBusy(false); }
+}
+
+function renderFelt() {}
+function stepHTML(scope, i, k, v, j = '') {
+  const a = `data-scope="${scope}" data-i="${i}" data-j="${j}" data-k="${k}"`;
+  return `<div class="stepper"><button type="button" data-act="dec" ${a} aria-label="Færre">−</button><output>${v}</output><button type="button" data-act="inc" ${a} aria-label="Flere">+</button></div>`;
+}
+/* ================= MINIFELT EDITOR ================= */
+const newStation = () => ({ time: null, pos: '', figs: [{ hits: 0, inner: 0 }] });
+function syncMini() {
+  const m = S.mini;
+  while (m.stations.length < m.count) m.stations.push(newStation());
+  m.stations.forEach(st => {
+    if (!st.figs.length) st.figs.push({ hits: 0, inner: 0 });
+    let left = m.shots;
+    st.figs.forEach(f => { f.hits = Math.max(0, Math.min(f.hits, left)); left -= f.hits; f.inner = Math.min(f.inner, f.hits); });
+  });
+}
+function updateMiniNote() {
+  if (!S.mini) return;
+  const k = S.mini.klasse, w = findW($('#fWeapon').value);
+  const min = k === 'fin' ? 1000 : k === 'luft' ? 500 : 0;
+  let t = 'Poeng: 1 per truffet figur pluss 1 per treff i figuren. Innertreff skiller like poengsummer.';
+  if (min) t += ` ${k === 'fin' ? 'Finfelt' : 'Luft'} krever minst ${min} g avtrekksvekt.`;
+  if (w && min && w.trigger > 0 && w.trigger < min) t += ` Obs: ${w.name} er registrert med ${fmt(w.trigger, 0)} g, som er under minimum.`;
+  if (w && w.sikte === 'rodpunkt') t += ' Rødpunktsikte er bare tillatt på prøve i enkelte veteranklasser (V65/V73), ikke i ordinære mesterskapsklasser.';
+  $('#miniNote').textContent = t;
+}
+function renderMini() {
+  if (!S.mini) return;
+  const m = S.mini; syncMini();
+  $('#fMiniKlasse').value = m.klasse || ''; $('#fFeltType').value = m.feltType || '';
+  $('#fMiniCount').value = String(m.count); $('#fMiniShots').value = String(m.shots);
+  const c = miniCalc(m);
+  $('#stations').innerHTML = m.stations.slice(0, m.count).map((st, i) => {
+    const r = c.per[i];
+    return `<div class="stage-card">
+      <div class="stage-top"><h3>Standplass ${i + 1}</h3><span class="muted">${r.p} av ${r.mx} poeng</span></div>
+      <div class="stage-fields">
+        <label class="field"><span>Skytetid (s)</span><input data-min="time" data-i="${i}" type="number" inputmode="decimal" min="0" step="any" value="${st.time ?? ''}" placeholder="F.eks. 12"></label>
+        <label class="field"><span>Stilling</span><select data-min="pos" data-i="${i}" style="min-height:42px;padding:8px 10px;background:var(--paper)">${POS_OPTS.map(([v, l]) => `<option value="${v}" ${v === st.pos ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        <div class="ctr"><span>Figurer</span>${stepHTML('mini', i, 'figs', st.figs.length)}</div>
+      </div>
+      ${st.figs.map((f, j) => `<div class="minifig"><b>Figur ${j + 1}</b>
+        <div class="ctr"><span>Treff</span>${stepHTML('mini', i, 'hits', f.hits, j)}</div>
+        <div class="ctr"><span>Inner</span>${stepHTML('mini', i, 'inner', f.inner, j)}</div></div>`).join('')}
+      <p class="stage-res">${r.h} av ${m.shots} skudd traff, ${r.fh} av ${st.figs.length} figurer truffet${r.inn ? ', ' + r.inn + ' inner' : ''}</p>
+      ${S.aiOk ? `<div class="actions"><button type="button" class="btn ghost small" data-act="photo" data-scope="mini" data-i="${i}" ${S.aiBusy ? 'disabled' : ''}>${CAM_SVG} Tell treff fra bilde</button></div>` : ''}
+    </div>`;
+  }).join('');
+  $('#miniTotals').innerHTML = `
+    <div class="score">
+      <div class="big">${c.points}<small>/${c.maxPoints}</small><span class="unit">${c.inner} innertreff</span></div>
+      <dl>
+        <dt>Figurer</dt><dd>${c.figuresHit} av ${c.figures} truffet</dd>
+        <dt>Treff</dt><dd>${c.hits} av ${c.shotsTotal} skudd</dd>
+        <dt>Treffprosent</dt><dd>${fmt(c.hitPct, 0)} %</dd>
+      </dl>
+    </div>`;
+  updateMiniNote();
+}
+$('#fMiniKlasse').addEventListener('change', e => { S.mini.klasse = e.target.value; prefs.miniKlasse = e.target.value; savePrefs(); updateMiniNote(); });
+$('#fMiniCount').addEventListener('change', e => { S.mini.count = Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)); prefs.miniCount = S.mini.count; savePrefs(); renderMini(); });
+$('#fMiniCount').innerHTML = Array.from({ length: 20 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
+$('#fMiniShots').innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
+$('#fMiniShots').addEventListener('change', e => { S.mini.shots = +e.target.value; prefs.miniShots = S.mini.shots; savePrefs(); renderMini(); });
+$('#fFeltType').addEventListener('change', e => {
+  const v = e.target.value; S.mini.feltType = v; prefs.feltType = v;
+  if (v === 'luftminifelt') S.mini.klasse = 'luft';
+  if (v === 'minifelt' && S.mini.klasse === 'luft') S.mini.klasse = 'fin';
+  prefs.miniKlasse = S.mini.klasse; savePrefs(); renderMini();
+});
+$('#stations').addEventListener('input', e => {
+  const t = e.target, k = t.dataset.min; if (!k) return;
+  const st = S.mini.stations[+t.dataset.i]; if (!st) return;
+  st[k] = k === 'time' ? (t.value === '' ? null : num(t.value)) : t.value;
+});
+
+/* ================= FRI EDITOR ================= */
+const newFri = () => ({ mal: '', shots: null, hits: null, pts: null, max: null, time: null, group: null, custom: [], thumb: null });
+const FRI_FIELDS = { mal: '#fFriMal', shots: '#fFriShots', hits: '#fFriHits', pts: '#fFriPts', max: '#fFriMax', time: '#fFriTime', group: '#fFriGroup' };
+const numOrNull = v => (v === '' || v == null) ? null : (Number.isFinite(num(v)) ? num(v) : null);
+function friCalc(f) {
+  return { hitPct: f.shots > 0 && f.hits != null ? Math.min(100, f.hits / f.shots * 100) : null, ptsPct: f.max > 0 && f.pts != null ? f.pts / f.max * 100 : null };
+}
+function friMain(s) { return s.ptsPct != null ? s.ptsPct : s.hitPct != null ? s.hitPct : (s.pts != null ? s.pts : null); }
+function friTotalsText(f) {
+  const c = friCalc(f);
+  const big = f.pts != null ? (f.max > 0 ? `${fmt(f.pts, 1)}<small>/${fmt(f.max, 1)}</small>` : fmt(f.pts, 1)) : (f.shots > 0 && f.hits != null ? `${f.hits}<small>/${f.shots}</small>` : '–');
+  const parts = [];
+  if (c.hitPct != null) parts.push(`${fmt(c.hitPct, 0)} % treff`);
+  if (f.time > 0) parts.push(`${fmt(f.time, 2)} s`);
+  if (f.group > 0) parts.push(`gruppe ${fmt(f.group, 0)} mm`);
+  return { big, sub: parts.join(', ') || 'Fyll inn det du vil registrere', c };
+}
+function renderFri() {
+  if (!S.fri) return;
+  const f = S.fri;
+  Object.entries(FRI_FIELDS).forEach(([k, sel]) => { const el = $(sel); if (document.activeElement !== el) el.value = f[k] ?? ''; });
+  $('#friCustom').innerHTML = f.custom.map((c, i) => `<div class="custom-row">
+      <input data-cf="name" data-i="${i}" value="${esc(c.name)}" placeholder="Navn" list="friNames" aria-label="Navn på måling">
+      <input data-cf="value" data-i="${i}" value="${esc(c.value)}" placeholder="Verdi" inputmode="decimal" aria-label="Verdi">
+      <input data-cf="unit" data-i="${i}" value="${esc(c.unit)}" placeholder="Enhet" aria-label="Enhet">
+      <button type="button" class="icon-btn del" data-cdel="${i}" aria-label="Fjern måling">${TRASH_SVG}</button></div>`).join('');
+  $('#friPhoto').innerHTML = f.thumb ? `<img src="${f.thumb}" alt="Bilde av målet" class="fri-img">` : '';
+  $('#btnFriPhotoDel').classList.toggle('hidden', !f.thumb);
+  renderFriTotals();
+}
+function renderFriTotals() {
+  if (!S.fri) return;
+  const t = friTotalsText(S.fri), f = S.fri;
+  const rows = [];
+  if (t.c.hitPct != null) rows.push(['Treffprosent', fmt(t.c.hitPct, 0) + ' %']);
+  if (t.c.ptsPct != null) rows.push(['Poeng av maks', fmt(t.c.ptsPct, 0) + ' %']);
+  if (f.time > 0) rows.push(['Tid', fmt(f.time, 2) + ' s']);
+  if (f.group > 0) rows.push(['Gruppe', fmt(f.group, 0) + ' mm']);
+  f.custom.filter(c => c.name).forEach(c => rows.push([c.name, `${c.value}${c.unit ? ' ' + c.unit : ''}`]));
+  $('#friTotals').innerHTML = `<div class="score"><div class="big">${t.big}${f.mal ? `<span class="unit">${esc(f.mal)}</span>` : ''}</div>
+    <dl>${rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('') || '<dt>Ingen tall ennå</dt><dd></dd>'}</dl></div>`;
+}
+$('#friSec').addEventListener('input', e => {
+  const t = e.target, f = S.fri; if (!f) return;
+  const key = Object.keys(FRI_FIELDS).find(k => FRI_FIELDS[k] === '#' + t.id);
+  if (key) f[key] = key === 'mal' ? t.value : numOrNull(t.value);
+  else if (t.dataset.cf) { const c = f.custom[+t.dataset.i]; if (c) c[t.dataset.cf] = t.value; }
+  else return;
+  renderFriTotals();
+});
+$('#friSec').addEventListener('click', e => {
+  const b = e.target.closest('[data-cdel]'); if (!b) return;
+  S.fri.custom.splice(+b.dataset.cdel, 1); renderFri();
+});
+$('#btnFriAdd').addEventListener('click', () => {
+  S.fri.custom.push({ name: '', value: '', unit: '' }); renderFri();
+  const ins = $$('#friCustom input[data-cf="name"]'); if (ins.length) ins[ins.length - 1].focus();
+});
+$('#friCam').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  const url = URL.createObjectURL(file);
+  try {
+    const im = await loadImage(url), c = canvasFrom(im, 900);
+    let q = 0.75, d = c.toDataURL('image/jpeg', q);
+    while (d.length > 220000 && q > 0.3) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
+    S.fri.thumb = d; renderFri();
+  } catch (_) { toast('Kunne ikke lese bildet.'); } finally { URL.revokeObjectURL(url); }
+});
+$('#btnFriPhotoDel').addEventListener('click', () => { S.fri.thumb = null; renderFri(); });
+
+function friProgress(list, labels, last5, prev5, delta) {
+  const hp = list.filter(s => s.hitPct != null), pp = list.filter(s => s.ptsPct != null), gp = list.filter(s => s.group > 0), tp = list.filter(s => s.time > 0);
+  const sd = s => shortDate(s.ts);
+  const kpi = (val, lbl, extra) => `<div class="kpi"><b>${val}</b><span>${lbl}</span><br>${extra || '<em>&nbsp;</em>'}</div>`;
+  const avg5 = (arr, f) => avgOf(arr.slice(-5).map(f)), prev = (arr, f) => arr.slice(-10, -5).length ? avgOf(arr.slice(-10, -5).map(f)) : null;
+  let k = '';
+  if (hp.length) k += kpi(fmt(avg5(hp, s => s.hitPct), 0) + ' %', 'Treffprosent, siste 5', delta(avg5(hp, s => s.hitPct), prev(hp, s => s.hitPct), false, 0));
+  if (pp.length) k += kpi(fmt(avg5(pp, s => s.ptsPct), 0) + ' %', 'Poeng av maks, siste 5', delta(avg5(pp, s => s.ptsPct), prev(pp, s => s.ptsPct), false, 0));
+  if (tp.length) k += kpi(fmt(avg5(tp, s => s.time), 2) + ' s', 'Tid, siste 5', delta(avg5(tp, s => s.time), prev(tp, s => s.time), true, 2));
+  if (gp.length) k += kpi(fmt(avg5(gp, s => s.group), 0) + ' mm', 'Gruppe, siste 5', delta(avg5(gp, s => s.group), prev(gp, s => s.group), true, 0));
+  k += kpi(String(list.length), 'Økter', `<em>${list.reduce((a, s) => a + (s.shots || 0), 0)} skudd totalt</em>`);
+  let html = `<div class="kpis">${k}</div>`;
+  if (hp.length >= 2) html += `<div class="chart"><h3>Treffprosent</h3><p>Høyere er bedre.</p>${lineChart(hp.map(s => s.hitPct), hp.map(sd), { unit: ' %', dec: 0 })}</div>`;
+  if (pp.length >= 2) html += `<div class="chart"><h3>Poeng i prosent av maks</h3><p>Høyere er bedre.</p>${lineChart(pp.map(s => s.ptsPct), pp.map(sd), { unit: ' %', dec: 0 })}</div>`;
+  if (tp.length >= 2) html += `<div class="chart"><h3>Tid</h3><p>Lavere er raskere.</p>${lineChart(tp.map(s => s.time), tp.map(sd), { unit: ' s', dec: 2 })}</div>`;
+  if (gp.length >= 2) html += `<div class="chart"><h3>Gruppe</h3><p>Lavere er bedre.</p>${lineChart(gp.map(s => s.group), gp.map(sd), { unit: ' mm', dec: 0 })}</div>`;
+  const names = [...new Set(list.flatMap(s => (s.custom || []).map(c => c.name)))];
+  names.forEach(n => {
+    const pts = list.map(s => { const c = (s.custom || []).find(x => x.name === n); const v = c ? parseFloat(String(c.value).replace(',', '.')) : NaN; return Number.isFinite(v) ? { v, s, unit: c.unit } : null; }).filter(Boolean);
+    if (pts.length >= 2) html += `<div class="chart"><h3>${esc(n)}</h3><p>Egen måling${pts[0].unit ? ', ' + esc(pts[0].unit) : ''}.</p>${lineChart(pts.map(x => x.v), pts.map(x => sd(x.s)), { unit: pts[0].unit ? ' ' + pts[0].unit : '', dec: 2 })}</div>`;
+  });
+  const byMal = new Map(); list.forEach(s => { const m = s.mal || 'Uten mål'; if (!byMal.has(m)) byMal.set(m, []); byMal.get(m).push(s); });
+  if (byMal.size > 1 || (byMal.size === 1 && !byMal.has('Uten mål'))) {
+    const rows = [...byMal.entries()].map(([m, arr]) => {
+      const h = arr.filter(s => s.hitPct != null), t = arr.filter(s => s.time > 0);
+      return `<tr><td>${esc(m)}</td><td class="num">${arr.length}</td><td class="num">${h.length ? fmt(avgOf(h.map(s => s.hitPct)), 0) + ' %' : '–'}</td><td class="num">${t.length ? fmt(avgOf(t.map(s => s.time)), 2) + ' s' : '–'}</td></tr>`;
+    }).join('');
+    html += `<div class="chart"><h3>Resultat per mål</h3><p>Viser hvilke mål du treffer best og raskest på.</p>
+      <div class="tablewrap"><table><thead><tr><th>Mål</th><th class="num">Økter</th><th class="num">Treff</th><th class="num">Tid</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  }
+  if (!hp.length && !pp.length && !tp.length && !gp.length && !names.length) html += '<p class="empty">Legg inn skudd og treff, poeng, tid eller egne målinger for å se utviklingen.</p>';
+  return html;
+}
+
+/* ================= DYNAMISK EDITOR ================= */
+const ZONE_LABEL = { A: 'A (alfa)', C: 'C (charlie)', D: 'D (delta)', M: 'Bom', NS: 'No-shoot', P: 'Prosedyre' };
+function renderPf() {
+  $$('#pfSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pf === S.dyn.pf)));
+  const z = zoneVal(S.dyn.pf);
+  $('#pfNote').textContent = `${S.dyn.pf === 'major' ? 'Major' : 'Minor'}: A = 5, C = ${z.C}, D = ${z.D} poeng. Bom, no-shoot og prosedyrefeil gir 10 i trekk. Hit factor = (poeng − trekk) / tid.`;
+}
+function stageResHTML(st) {
+  const r = stageCalc(st, S.dyn.pf);
+  return `<b>HF ${fmtF(r.hf, 4)}</b> &nbsp; ${r.raw} − ${r.pen} = ${r.pts} poeng${st.time > 0 ? ' på ' + fmtF(st.time, 2) + ' s' : ', legg inn tid'}${r.sp != null ? ` &nbsp; <b>${fmtF(r.sp, 2)}</b> etappepoeng` : ''}`;
+}
+function renderDyn() {
+  if (!S.dyn) return;
+  renderPf();
+  $('#stages').innerHTML = S.dyn.stages.map((st, i) => `
+    <div class="stage-card" data-i="${i}">
+      <div class="stage-top">
+        <input data-in="name" data-i="${i}" value="${esc(st.name)}" aria-label="Navn på etappe">
+        ${S.dyn.stages.length > 1 ? `<button type="button" class="btn danger small" data-act="delstage" data-i="${i}">Fjern</button>` : ''}
+      </div>
+      <div class="zones">${['A', 'C', 'D', 'M', 'NS', 'P'].map(k => `<div class="ctr"><span>${ZONE_LABEL[k]}</span>${stepHTML('dyn', i, k, st[k])}</div>`).join('')}</div>
+      <div class="stage-fields">
+        <label class="field"><span>Tid (s)</span><input data-in="time" data-i="${i}" type="number" inputmode="decimal" min="0" step="0.01" value="${st.time || ''}"></label>
+        <label class="field"><span>Vinnerens HF</span><input data-in="winHF" data-i="${i}" type="number" inputmode="decimal" min="0" step="0.0001" value="${st.winHF || ''}" placeholder="Valgfritt"></label>
+        <label class="field"><span>Maks etappepoeng</span><input data-in="maxPts" data-i="${i}" type="number" inputmode="numeric" min="0" value="${st.maxPts || 100}"></label>
+      </div>
+      <p class="stage-res" id="stres-${i}">${stageResHTML(st)}</p>
+      ${S.aiOk ? `<div class="actions"><button type="button" class="btn ghost small" data-act="photo" data-scope="dyn" data-i="${i}" ${S.aiBusy ? 'disabled' : ''}>${CAM_SVG} Tell treff fra bilde</button></div>` : ''}
+    </div>`).join('');
+  renderDynTotals();
+}
+function renderDynTotals() {
+  const c = dynCalc(S.dyn);
+  $('#dynTotals').innerHTML = `
+    <div class="score">
+      <div class="big">${fmtF(c.hf, 4)}<span class="unit">hit factor${S.dyn.stages.length > 1 ? ', samlet' : ''}</span></div>
+      <dl>
+        <dt>Poeng</dt><dd>${c.pts}</dd>
+        <dt>Tid</dt><dd>${fmtF(c.time, 2)} s</dd>
+        <dt>Treff</dt><dd>${c.A} A, ${c.C} C, ${c.D} D, ${c.M} bom</dd>
+        <dt>Presisjon</dt><dd>${fmt(c.acc, 0)} %</dd>
+        ${c.stagePts != null ? `<dt>Etappepoeng</dt><dd>${fmtF(c.stagePts, 2)}</dd>` : ''}
+      </dl>
+    </div>`;
+}
+$$('#pfSeg button').forEach(b => b.addEventListener('click', () => { S.dyn.pf = b.dataset.pf; prefs.pf = S.dyn.pf; savePrefs(); renderDyn(); }));
+$('#btnAddStage').addEventListener('click', () => { S.dyn.stages.push(newStage(S.dyn.stages.length + 1)); renderDyn(); });
+$('#stages').addEventListener('input', e => {
+  const t = e.target, k = t.dataset.in; if (!k) return;
+  const st = S.dyn.stages[+t.dataset.i]; if (!st) return;
+  st[k] = k === 'name' ? t.value : num(t.value);
+  const el = $('#stres-' + t.dataset.i); if (el) el.innerHTML = stageResHTML(st);
+  renderDynTotals();
+});
+
+/* ---------- Shared clicks in editor (steppers, photo, remove) ---------- */
+$('#view-new').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, scope = b.dataset.scope, i = +b.dataset.i, k = b.dataset.k;
+  if (act === 'inc' || act === 'dec') {
+    const dlt = act === 'inc' ? 1 : -1;
+    if (scope === 'mini') {
+      const st = S.mini.stations[i], j = +b.dataset.j;
+      if (k === 'figs') { if (dlt > 0 && st.figs.length < 8) st.figs.push({ hits: 0, inner: 0 }); if (dlt < 0 && st.figs.length > 1) st.figs.pop(); }
+      else {
+        const f = st.figs[j];
+        if (k === 'hits') {
+          const used = st.figs.reduce((a, x) => a + x.hits, 0);
+          if (dlt > 0 && used >= S.mini.shots) { toast(`Maks ${S.mini.shots} skudd per standplass`); return; }
+          f.hits = Math.max(0, f.hits + dlt); f.inner = Math.min(f.inner, f.hits);
+        } else f.inner = Math.max(0, Math.min(f.hits, f.inner + dlt));
+      }
+      renderMini();
+    } else if (scope === 'dyn') {
+      const st = S.dyn.stages[i]; st[k] = Math.max(0, st[k] + dlt);
+      const card = b.closest('.stage-card'); b.parentElement.querySelector('output').textContent = st[k];
+      const el = card && card.querySelector('.stage-res'); if (el) el.innerHTML = stageResHTML(st);
+      renderDynTotals();
+    }
+  } else if (act === 'delstage') {
+    if (confirm('Fjerne denne etappen?')) { S.dyn.stages.splice(i, 1); renderDyn(); }
+  } else if (act === 'photo') {
+    if (S.aiBusy) return;
+    const file = await pickImage(); if (!file) return;
+    if (scope === 'mini') countMini(i, file); else countDyn(i, file);
+  }
+});
+async function countMini(i, file) {
+  const msg = $('#miniMsg'); msg.className = 'ai-msg';
+  const st = S.mini.stations[i];
+  S.aiBusy = true; renderMini(); msg.textContent = `Claude teller treff på standplass ${i + 1} …`;
+  try {
+    const blob = await fileToBlob(file);
+    const out = await claudeJSON(
+`This photo shows miniature field shooting figures (minifelt, scaled-down Norwegian field pistol figures). There are probably ${st.figs.length} figure(s), but count what you actually see.
+For each figure, from left to right, count bullet holes inside or touching the figure ("hits") and how many of those are inside or touching its marked inner ring ("inner"; 0 if none).
+Ignore holes outside the figures and old holes covered with pasters or tape.
+Reply with only JSON: {"figures":[{"hits":2,"inner":1}],"note":"kort norsk kommentar"}`, blob);
+    const figs = Array.isArray(out && out.figures) ? out.figures.slice(0, 8) : [];
+    if (!figs.length) throw { code: 'invalid_json' };
+    let left = S.mini.shots, found = 0;
+    st.figs = figs.map(f => {
+      const h0 = Math.max(0, Math.round(+f.hits || 0)); found += h0;
+      const h = Math.min(h0, left); left -= h;
+      return { hits: h, inner: Math.min(h, Math.max(0, Math.round(+f.inner || 0))) };
+    });
+    const tot = st.figs.reduce((a, f) => a + f.hits, 0);
+    msg.textContent = `Standplass ${i + 1}: ${st.figs.length} figurer, ${tot} treff.` + (found > tot ? ` Fant ${found} hull, men maks er ${S.mini.shots} skudd.` : '') + (out.note ? ' ' + out.note : '');
+  } catch (e) { msg.className = 'ai-msg err'; msg.textContent = aiErrText(e); }
+  finally { S.aiBusy = false; renderMini(); }
+}
+async function countDyn(i, file) {
+  const msg = $('#dynMsg'); msg.className = 'ai-msg';
+  S.aiBusy = true; renderDyn(); msg.textContent = 'Claude teller treff på skiva …';
+  try {
+    const blob = await fileToBlob(file);
+    const out = await claudeJSON(
+`This photo shows one or more IPSC-style practical shooting targets with scoring zones A, C and D, and possibly no-shoot targets (often white or marked with an X/hands).
+Score each bullet hole in the highest-value zone it touches (A beats C beats D). Count holes in A, C and D on shoot targets, and holes on no-shoot targets ("NS").
+Ignore holes covered with pasters or tape.
+Reply with only JSON: {"A":0,"C":0,"D":0,"NS":0,"note":"kort norsk kommentar"}`, blob);
+    const st = S.dyn.stages[i]; const add = {};
+    ['A', 'C', 'D', 'NS'].forEach(k => { add[k] = Math.max(0, Math.round(+out[k] || 0)); st[k] += add[k]; });
+    msg.textContent = `La til ${add.A} A, ${add.C} C, ${add.D} D${add.NS ? ' og ' + add.NS + ' no-shoot' : ''} på ${st.name}. Ta bilde av neste skive for å legge til flere.` + (out.note ? ' ' + out.note : '');
+  } catch (e) { msg.className = 'ai-msg err'; msg.textContent = aiErrText(e); }
+  finally { S.aiBusy = false; renderDyn(); }
+}
+
+/* ================= COMMON / PROGRAM ================= */
+function todayStr(d = new Date()) { const z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`; }
+const OVELSE_PH = { ring: 'F.eks. Luftpistol 10 m, Bane 200 m', felt: 'F.eks. Klubbstevne, NM, trening', dyn: 'F.eks. IPSC klubbstevne, Classifier', fri: 'F.eks. Stålmål, reaksjonstrening' };
+function setProgram(p) {
+  S.program = p;
+  $$('#progSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.prog === p)));
+  $('#fOvelse').placeholder = OVELSE_PH[p];
+  if (!S.editingId) { $('#fOvelse').value = (prefs.ovelse && prefs.ovelse[p]) || ''; $('#fAvstand').value = (prefs.avstand && prefs.avstand[p]) || ''; prefs.program = p; savePrefs(); }
+  updateSections();
+  if (p === 'felt') renderMini(); if (p === 'fri') renderFri(); if (p === 'dyn') renderDyn(); if (p === 'ring') { draw(); updateRing(); }
+}
+function updateSections() {
+  const p = S.program;
+  $('#ringSec').classList.toggle('hidden', p !== 'ring');
+  $('#miniSec').classList.toggle('hidden', p !== 'felt');
+  $('#friSec').classList.toggle('hidden', p !== 'fri');
+  $('#dynSec').classList.toggle('hidden', p !== 'dyn');
+  $('#commonSec').classList.toggle('hidden', p === 'ring' && !S.src);
+}
+$$('#progSeg button').forEach(b => b.addEventListener('click', () => { if (!S.editingId) setProgram(b.dataset.prog); }));
+
+function resetAll() {
+  S.editingId = null; S.editingTs = null;
+  resetRing();
+  S.fri = newFri();
+  S.dyn = { pf: prefs.pf || 'minor', stages: [newStage(1)] };
+  S.mini = { feltType: prefs.feltType || '', klasse: prefs.miniKlasse || '', count: prefs.miniCount || 6, shots: prefs.miniShots || 6, stations: [] };
+  $('#fDato').value = todayStr(); $('#fTid').value = nowTime(); $('#fNotes').value = '';
+  S.dagsform = 0; renderForm();
+  fillEquipSelects();
+  $('#fBane').value = findR(prefs.baneId) ? prefs.baneId : '';
+  { const r = findR($('#fBane').value); $('#fSted').value = r && r.sted ? r.sted : (prefs.sted || ''); }
+  $('#fWeapon').value = findW(prefs.weaponId) ? prefs.weaponId : '';
+  $('#fAmmo').value = findA(prefs.ammoId) ? prefs.ammoId : '';
+  $('#fTarget').value = allTargets().some(t => t.id === prefs.targetId) ? prefs.targetId : 'gen10';
+  $('#fDecimal').checked = !!prefs.decimal;
+  const a = findA($('#fAmmo').value); $('#fHole').value = a && a.diam ? a.diam : (prefs.hole || '');
+  $('#editTitle').textContent = 'Ny serie';
+  $('#btnSave').textContent = 'Lagre serie';
+  $('#btnDelete').classList.add('hidden'); $('#btnNewBlank').classList.add('hidden');
+  $$('#progSeg button').forEach(b => b.disabled = false);
+  $('#dynMsg').textContent = ''; $('#miniMsg').textContent = '';
+  setProgram(S.program);
+}
+$('#btnNewBlank').addEventListener('click', resetAll);
+
+function renderForm() { $$('#formSeg button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.form === S.dagsform))); }
+$$('#formSeg button').forEach(b => b.addEventListener('click', () => { S.dagsform = S.dagsform === +b.dataset.form ? 0 : +b.dataset.form; renderForm(); }));
+let lastSel = { fWeapon: '', fAmmo: '', fTarget: '', fBane: '' };
+$('#fBane').addEventListener('change', e => {
+  const apply = id => { const r = findR(id); if (r && r.sted) $('#fSted').value = r.sted; };
+  if (e.target.value === '__new') openEq('ranges', null, nid => { fillEquipSelects(); e.target.value = nid || lastSel.fBane || ''; apply(e.target.value); });
+  else { lastSel.fBane = e.target.value; apply(e.target.value); }
+});
+['fWeapon', 'fAmmo', 'fTarget', 'fBane'].forEach(id => $('#' + id).addEventListener('focus', e => { lastSel[id] = e.target.value; }));
+$('#fWeapon').addEventListener('change', e => {
+  if (e.target.value === '__new') openEq('weapons', null, nid => { fillEquipSelects(); e.target.value = nid || lastSel.fWeapon; updateMiniNote(); });
+  else { lastSel.fWeapon = e.target.value; updateMiniNote(); }
+});
+$('#fAmmo').addEventListener('change', e => {
+  const apply = id => {
+    const a = findA(id);
+    if (a && a.diam) { $('#fHole').value = a.diam; draw(); updateRing(); }
+    if (a && a.pf && S.dyn) { S.dyn.pf = a.pf; renderDyn(); }
+  };
+  if (e.target.value === '__new') openEq('ammo', null, nid => { fillEquipSelects(); e.target.value = nid || lastSel.fAmmo; apply(e.target.value); });
+  else { lastSel.fAmmo = e.target.value; apply(e.target.value); }
+});
+$('#fTarget').addEventListener('change', e => {
+  const after = () => { if (e.target.value !== '__snap') { prefs.targetId = e.target.value; savePrefs(); } draw(); updateRing(); };
+  if (e.target.value === '__new') openEq('targets', null, nid => { fillEquipSelects(); e.target.value = nid || lastSel.fTarget || 'gen10'; after(); });
+  else after();
+});
+
+function makeThumb() {
+  const c = canvasFrom(S.src, 760);
+  let q = 0.75, url = c.toDataURL('image/jpeg', q);
+  while (url.length > 190000 && q > 0.3) { q -= 0.1; url = c.toDataURL('image/jpeg', q); }
+  return url;
+}
+$('#btnSave').addEventListener('click', async () => {
+  const p = S.program;
+  const dato = $('#fDato').value || todayStr();
+  const tid = $('#fTid').value || '';
+  let ts = new Date(dato + 'T' + (tid || '12:00') + ':00').getTime(); if (!Number.isFinite(ts)) ts = Date.now();
+  const w = findW($('#fWeapon').value), a = findA($('#fAmmo').value), rg = findR($('#fBane').value);
+  const doc = { program: p, ts, dato, tid, ovelse: $('#fOvelse').value.trim(), notes: $('#fNotes').value.trim(),
+    sted: $('#fSted').value.trim(), baneId: rg ? rg.id : null, baneName: rg ? rg.name : '',
+    avstand: num($('#fAvstand').value) || null, dagsform: S.dagsform || 0,
+    weaponId: w ? w.id : null, weaponName: w ? w.name : '', ammoId: a ? a.id : null, ammoName: a ? a.name : '' };
+  if (p === 'ring') {
+    const rel = relHits();
+    if (!rel) { toast('Marker senter og ytterring først.'); return; }
+    if (!rel.length) { toast('Marker minst ett treff.'); return; }
+    const t = currentTarget(), g = geom(t), hr = holeR(), st = ringStats(rel, g, hr), W = S.imgW;
+    Object.assign(doc, {
+      targetId: t.id || null, targetSnap: { name: t.name, rings: t.rings, outer: t.outer, ten: t.ten, x: t.x || 0, unitless: !!t.unitless },
+      holeDiam: num($('#fHole').value) || null, decimal: $('#fDecimal').checked,
+      aspect: S.imgH / W, center: { x: S.center.x / W, y: S.center.y / W }, radius: S.radius / W,
+      hits: S.hits.map(h => ({ x: h.x / W, y: h.y / W })), rel: rel.map(q => ({ x: +q.x.toFixed(4), y: +q.y.toFixed(4) })),
+      rings: g.rings, n: st.n, total: st.total, totalDec: st.totalDec, xCount: st.xCount, max: st.max, avg: st.avg, avgDec: st.avgDec,
+      es: st.es, mr: st.mr, mpiX: st.mpiX, mpiY: st.mpiY, thumb: makeThumb() });
+    prefs.hole = $('#fHole').value;
+  } else if (p === 'fri') {
+    const f = S.fri, c = friCalc(f);
+    Object.assign(doc, { mal: (f.mal || '').trim(), shots: f.shots, hits: f.hits, pts: f.pts, max: f.max, time: f.time, group: f.group,
+      custom: f.custom.filter(x => (x.name || '').trim()).map(x => ({ name: x.name.trim(), value: x.value, unit: (x.unit || '').trim() })),
+      thumb: f.thumb || null, hitPct: c.hitPct, ptsPct: c.ptsPct });
+  } else if (p === 'felt') {
+    syncMini();
+    const m = S.mini, c = miniCalc(m);
+    Object.assign(doc, { feltType: m.feltType || '', klasse: m.klasse, count: m.count, shots: m.shots, stations: clone(m.stations.slice(0, m.count)),
+      points: c.points, maxPoints: c.maxPoints, hits: c.hits, inner: c.inner, figuresHit: c.figuresHit, figures: c.figures, shotsTotal: c.shotsTotal, hitPct: c.hitPct });
+  } else {
+    const d = S.dyn;
+    if (d.stages.some(s => !(s.time > 0))) { toast('Legg inn tid for hver etappe.'); return; }
+    const c = dynCalc(d);
+    Object.assign(doc, { pf: d.pf, stages: d.stages, pts: c.pts, time: c.time, hf: c.hf, acc: c.acc, stagePts: c.stagePts, A: c.A, C: c.C, D: c.D, M: c.M, NS: c.NS, P: c.P });
+  }
+  const id = S.editingId || uid('s');
+  const btn = $('#btnSave'); btn.disabled = true;
+  try {
+    await Store.save(id, doc);
+    prefs.ovelse = prefs.ovelse || {}; prefs.ovelse[p] = doc.ovelse; prefs.weaponId = doc.weaponId; prefs.ammoId = doc.ammoId;
+    prefs.baneId = doc.baneId; prefs.sted = doc.sted; prefs.avstand = prefs.avstand || {}; prefs.avstand[p] = doc.avstand || ''; savePrefs();
+    toast(S.editingId ? 'Endringer lagret' : 'Serie lagret');
+    resetAll(); showTab('history');
+  } catch (e) {
+    const code = e && e.code;
+    toast(code === 'quota_exceeded' || (e && e.name === 'QuotaExceededError') ? 'Lagringen er full. Slett noen gamle serier og prøv igjen.'
+      : code === 'invalid_argument' ? 'Du har ikke tilgang til å lagre her.' : 'Lagring feilet. Prøv igjen.');
+  } finally { btn.disabled = false; }
+});
+$('#btnDelete').addEventListener('click', async () => {
+  if (!S.editingId || !confirm('Slette denne serien for godt?')) return;
+  try { await Store.remove(S.editingId); toast('Serie slettet'); resetAll(); showTab('history'); }
+  catch (_) { toast('Sletting feilet. Prøv igjen.'); }
+});
+
+async function openSeries(s) {
+  resetAll();
+  S.editingId = s.id; S.editingTs = s.ts; S.program = s.program;
+  $('#fOvelse').value = s.ovelse || ''; $('#fNotes').value = s.notes || '';
+  $('#fDato').value = s.dato || todayStr(new Date(s.ts));
+  $('#fTid').value = s.tid || ''; $('#fSted').value = s.sted || ''; $('#fAvstand').value = s.avstand ?? '';
+  S.dagsform = s.dagsform || 0; renderForm();
+  fillEquipSelects();
+  $('#fBane').value = findR(s.baneId) ? s.baneId : '';
+  $('#fWeapon').value = findW(s.weaponId) ? s.weaponId : '';
+  $('#fAmmo').value = findA(s.ammoId) ? s.ammoId : '';
+  if (s.program === 'ring') {
+    try {
+      const im = await loadImage(s.thumb);
+      const known = allTargets().find(t => t.id === s.targetId);
+      S.snapTarget = known ? null : s.targetSnap;
+      fillEquipSelects();
+      $('#fTarget').value = known ? known.id : '__snap';
+      $('#fHole').value = s.holeDiam || ''; $('#fDecimal').checked = !!s.decimal;
+      const c = canvasFrom(im, 2000); setWorkImage(c);
+      const W = c.width;
+      S.center = { x: s.center.x * W, y: s.center.y * W }; S.radius = s.radius * W;
+      S.hits = (s.hits || []).map(h => ({ x: h.x * W, y: h.y * W }));
+    } catch (_) { toast('Kunne ikke åpne bildet til serien.'); }
+  } else if (s.program === 'felt') {
+    S.mini = { feltType: s.feltType || '', klasse: s.klasse || '', count: s.count, shots: s.shots, stations: clone(s.stations || []) };
+  } else if (s.program === 'fri') {
+    S.fri = { ...newFri(), mal: s.mal || '', shots: s.shots ?? null, hits: s.hits ?? null, pts: s.pts ?? null, max: s.max ?? null, time: s.time ?? null, group: s.group ?? null, custom: clone(s.custom || []), thumb: s.thumb || null };
+  } else {
+    S.dyn = { pf: s.pf || 'minor', stages: clone(s.stages || [newStage(1)]) };
+  }
+  $('#editTitle').textContent = PROG_NAME[s.program] + ', ' + dateStr(s.ts);
+  $('#btnSave').textContent = 'Lagre endringer';
+  $('#btnDelete').classList.remove('hidden'); $('#btnNewBlank').classList.remove('hidden');
+  setProgram(s.program);
+  $$('#progSeg button').forEach(b => b.disabled = b.dataset.prog !== s.program);
+  if (s.program === 'ring') setMode('hits');
+  showTab('new');
+}
+
+/* ================= EQUIPMENT ================= */
+const EQ = {
+  weapons: { title: 'Våpen', one: 'våpen', ny: 'Nytt våpen', fields: [
+    { k: 'name', l: 'Navn', req: 1, ph: 'F.eks. Pardini SP', full: 1 },
+    { k: 'kaliber', l: 'Type og kaliber', ph: 'F.eks. Pistol .22 LR', full: 1 },
+    { k: 'trigger', l: 'Avtrekksvekt (g)', t: 'number', ph: 'F.eks. 1050' },
+    { k: 'sikte', l: 'Sikte', t: 'select', opts: [['', 'Ikke valgt'], ['jern', 'Åpne sikter'], ['rodpunkt', 'Rødpunkt'], ['kikkert', 'Kikkertsikte'], ['annet', 'Annet']] },
+    { k: 'notes', l: 'Notater', t: 'textarea', full: 1 } ] },
+  ammo: { title: 'Ammunisjon', one: 'ammunisjon', ny: 'Ny ammunisjon', fields: [
+    { k: 'name', l: 'Navn', req: 1, ph: 'F.eks. Lapua Center-X', full: 1 },
+    { k: 'kaliber', l: 'Kaliber', ph: 'F.eks. .22 LR' },
+    { k: 'diam', l: 'Kulediameter (mm)', t: 'number', ph: 'F.eks. 5,6' },
+    { k: 'pf', l: 'Power factor (dynamisk)', t: 'select', opts: [['', 'Ikke valgt'], ['minor', 'Minor'], ['major', 'Major']], full: 1 },
+    { k: 'notes', l: 'Notater', t: 'textarea', ph: 'Kulevekt, lot-nummer, ladning …', full: 1 } ] },
+  targets: { title: 'Skiver', one: 'skive', ny: 'Ny skive', fields: [
+    { k: 'name', l: 'Navn', req: 1, ph: 'F.eks. DFS 200 m', full: 1 },
+    { k: 'rings', l: 'Antall ringer', t: 'number', req: 1, def: 10 },
+    { k: 'outer', l: 'Diameter ring 1 (mm)', t: 'number', req: 1 },
+    { k: 'ten', l: 'Diameter tieren (mm)', t: 'number', req: 1 },
+    { k: 'x', l: 'Diameter innerblink (mm)', t: 'number', ph: 'Valgfritt' } ] },
+  ranges: { title: 'Baner', one: 'bane', ny: 'Ny bane', fields: [
+    { k: 'name', l: 'Navn', req: 1, ph: 'F.eks. Klubbens innendørsbane', full: 1 },
+    { k: 'sted', l: 'Sted', ph: 'By, anlegg eller adresse', full: 1 },
+    { k: 'type', l: 'Type', t: 'select', opts: [['', 'Ikke valgt'], ['inne', 'Innendørs'], ['ute', 'Utendørs']] },
+    { k: 'notes', l: 'Notater', t: 'textarea', ph: 'Lysforhold, avstander, åpningstider …', full: 1 } ] },
+};
+let dlgState = null;
+function openEq(kind, item, done) {
+  const def = EQ[kind];
+  dlgState = { kind, item, done, finished: false };
+  $('#dlgTitle').textContent = item ? 'Rediger ' + def.one : def.ny;
+  $('#dlgErr').textContent = '';
+  $('#dlgFields').innerHTML = def.fields.map(f => {
+    const v = item ? (item[f.k] ?? '') : (f.def ?? '');
+    let inp;
+    if (f.t === 'textarea') inp = `<textarea id="eq_${f.k}" placeholder="${esc(f.ph || '')}">${esc(v)}</textarea>`;
+    else if (f.t === 'select') inp = `<select id="eq_${f.k}">${f.opts.map(([ov, ol]) => `<option value="${ov}" ${ov === v ? 'selected' : ''}>${esc(ol)}</option>`).join('')}</select>`;
+    else inp = `<input id="eq_${f.k}" ${f.t === 'number' ? 'type="number" inputmode="decimal" step="any" min="0"' : ''} value="${esc(v)}" placeholder="${esc(f.ph || '')}">`;
+    return `<label class="field ${f.full ? 'full' : ''}"><span>${esc(f.l)}</span>${inp}</label>`;
+  }).join('');
+  $('#dlgDelete').classList.toggle('hidden', !item);
+  $('#dlg').showModal();
+  setTimeout(() => { const el = $('#eq_name'); if (el && !item) el.focus(); }, 30);
+}
+function closeDlg(result) {
+  const st = dlgState; dlgState = null;
+  if ($('#dlg').open) $('#dlg').close();
+  if (st && st.done) st.done(result);
+}
+$('#dlg').addEventListener('close', () => { if (dlgState) { const st = dlgState; dlgState = null; st.done && st.done(null); } });
+$('#dlgCancel').addEventListener('click', () => closeDlg(null));
+$('#dlgSave').addEventListener('click', async () => {
+  const { kind, item } = dlgState, def = EQ[kind];
+  const obj = item ? { ...item } : { id: uid(kind[0]) };
+  for (const f of def.fields) {
+    const raw = $('#eq_' + f.k).value.trim();
+    if (f.req && !raw) { $('#dlgErr').textContent = f.l + ' må fylles ut.'; return; }
+    obj[f.k] = f.t === 'number' ? (raw ? num(raw) : null) : raw;
+  }
+  if (kind === 'targets') {
+    if (!(obj.rings >= 1 && obj.outer > 0 && obj.ten > 0 && obj.ten < obj.outer)) { $('#dlgErr').textContent = 'Sjekk målene. Tieren må være mindre enn ring 1.'; return; }
+    if (obj.x && obj.x > obj.ten) { $('#dlgErr').textContent = 'Innerblinken må være mindre enn tieren.'; return; }
+    obj.rings = Math.round(obj.rings);
+  }
+  const eq = clone(S.eq);
+  const arr = eq[kind]; const idx = arr.findIndex(x => x.id === obj.id);
+  if (idx >= 0) arr[idx] = obj; else arr.push(obj);
+  try { await Store.saveEq(eq); S.eq = eq; renderAllLists(); closeDlg(obj.id); toast('Lagret'); }
+  catch (_) { $('#dlgErr').textContent = 'Lagring feilet. Prøv igjen.'; }
+});
+$('#dlgDelete').addEventListener('click', async () => {
+  const { kind, item } = dlgState;
+  if (!confirm('Slette «' + item.name + '»? Lagrede serier beholder navnet.')) return;
+  const eq = clone(S.eq); eq[kind] = eq[kind].filter(x => x.id !== item.id);
+  try { await Store.saveEq(eq); S.eq = eq; renderAllLists(); closeDlg(null); toast('Slettet'); }
+  catch (_) { $('#dlgErr').textContent = 'Sletting feilet. Prøv igjen.'; }
+});
+function renderGear() {
+  const used = (k, id) => S.series.filter(s => s[k] === id).length;
+  const grp = (kind, items, sub) => `
+    <div class="eq-group">
+      <div class="sec-head"><h3>${EQ[kind].title}</h3><button class="btn ghost small" data-add="${kind}">Legg til</button></div>
+      ${items.length ? items.map(i => `<button class="eq-item" data-edit="${kind}" data-id="${esc(i.id)}"><div><b>${esc(i.name)}</b><span>${esc(sub(i))}</span></div><span>Rediger</span></button>`).join('')
+        : `<p class="muted" style="margin:0 0 8px">Ingen ${EQ[kind].one} lagt inn ennå.</p>`}
+    </div>`;
+  $('#gearBody').innerHTML =
+    grp('ranges', S.eq.ranges, r => [r.sted, r.type === 'inne' ? 'Innendørs' : r.type === 'ute' ? 'Utendørs' : '', used('baneId', r.id) + ' serier'].filter(Boolean).join(', ')) +
+    grp('weapons', S.eq.weapons, w => [w.kaliber, w.trigger ? fmt(w.trigger, 0) + ' g' : '', ({ jern: 'Åpne sikter', rodpunkt: 'Rødpunkt', kikkert: 'Kikkert', annet: 'Annet sikte' })[w.sikte] || '', used('weaponId', w.id) + ' serier'].filter(Boolean).join(', ')) +
+    grp('ammo', S.eq.ammo, a => [a.kaliber, a.diam ? fmt(a.diam, 2) + ' mm' : '', a.pf ? (a.pf === 'major' ? 'Major' : 'Minor') : '', used('ammoId', a.id) + ' serier'].filter(Boolean).join(', ')) +
+    grp('targets', S.eq.targets, t => `${t.rings} ringer, ring 1 ${fmt(t.outer, 1)} mm, tier ${fmt(t.ten, 1)} mm${t.x ? ', innerblink ' + fmt(t.x, 1) + ' mm' : ''}`) +
+    `<p class="note">Innebygde skiver: ${PRESET_TARGETS.filter(t => !t.unitless).map(t => esc(t.name)).join(', ')}. Kontroller målene mot skivene du bruker, og legg inn egne skiver (for eksempel DFS-skiver) med mål fra skiveprodusenten.</p>`;
+}
+$('#gearBody').addEventListener('click', e => {
+  const a = e.target.closest('[data-add]'); if (a) { openEq(a.dataset.add, null, null); return; }
+  const ed = e.target.closest('[data-edit]');
+  if (ed) { const item = S.eq[ed.dataset.edit].find(x => x.id === ed.dataset.id); if (item) openEq(ed.dataset.edit, item, null); }
+});
+
+/* ================= LISTS ================= */
+const dateStr = ts => new Date(ts).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' });
+const shortDate = ts => new Date(ts).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
+const GLYPH = {
+  felt: '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4c4 0 7 3 7 7 0 3-2 5-3 6l8 4v15H8V21l8-4c-1-1-3-3-3-6 0-4 3-7 7-7z" fill="var(--muted)"/><circle cx="20" cy="27" r="4" fill="none" stroke="var(--surface)" stroke-width="1.5"/></svg>',
+  dyn: '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M14 3h12l3 6v4l5 5v18l-5 3H11l-5-3V18l5-5V9z" fill="var(--muted)"/><rect x="16" y="15" width="8" height="13" fill="none" stroke="var(--surface)" stroke-width="1.5"/></svg>',
+  fri: '<svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="var(--muted)" stroke-width="2.5"><circle cx="20" cy="20" r="12"/><path d="M20 3v10M20 27v10M3 20h10M27 20h10"/></svg>',
+};
+const TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
+async function deleteSeries(s) {
+  const backup = clone(s); delete backup.id;
+  try {
+    await Store.remove(s.id);
+    toastAction(`Serien fra ${dateStr(s.ts)} er slettet`, 'Angre', async () => {
+      try { await Store.save(s.id, backup); toast('Serien er gjenopprettet'); } catch (_) { toast('Kunne ikke gjenopprette serien.'); }
+    });
+  } catch (_) { toast('Sletting feilet. Prøv igjen.'); }
+}
+function equipLine(s) { return [s.weaponName, s.ammoName].filter(Boolean).join(' med '); }
+function renderHistory() {
+  const box = $('#histList');
+  if (!S.loaded) { box.innerHTML = '<p class="empty">Henter serier …</p>'; return; }
+  const f = $('#hProg').value;
+  const list = S.series.filter(s => !f || s.program === f);
+  if (!list.length) { box.innerHTML = '<p class="empty">Ingen serier ennå. Registrer en under «Ny serie».</p>'; return; }
+  box.innerHTML = '';
+  const keyOf = s => (s.dato || todayStr(new Date(s.ts))) + '|' + s.program + '|' + (s.ovelse || '');
+  list.sort((a, b) => (b.dato || '').localeCompare(a.dato || '') || keyOf(a).localeCompare(keyOf(b)) || b.ts - a.ts);
+  const groups = new Map(); list.forEach(s => { const k = keyOf(s); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(s); });
+  let lastKey = null;
+  list.forEach(s => {
+    const gk = keyOf(s);
+    if (gk !== lastKey) { lastKey = gk; box.appendChild(daySum(groups.get(gk))); }
+    const b = document.createElement('button'); b.className = 'item';
+    let thumb, line, pts;
+    if (s.program === 'ring') {
+      const g = geom(s.targetSnap);
+      thumb = `<img class="thumb" alt="" src="${esc(s.thumb)}">`;
+      line = `${s.n} skudd, gruppe ${s.n > 1 ? sizeText(s.es, g) : '–'}${s.xCount ? ', ' + s.xCount + ' X' : ''}`;
+      pts = s.decimal ? `${fmtF(s.totalDec, 1)}<small>${s.total} av ${s.max}</small>` : `${s.total}<small>av ${s.max}</small>`;
+    } else if (s.program === 'felt') {
+      thumb = `<div class="thumb">${GLYPH.felt}</div>`;
+      line = `${FELT_TYPE[s.feltType] ? FELT_TYPE[s.feltType] + ', ' : ''}${s.count} standplasser, ${s.hits}/${s.shotsTotal} treff, ${s.inner} inner`;
+      pts = `${s.points}<small>av ${s.maxPoints}</small>`;
+    } else if (s.program === 'fri') {
+      thumb = s.thumb ? `<img class="thumb" alt="" src="${esc(s.thumb)}">` : `<div class="thumb">${GLYPH.fri}</div>`;
+      line = [s.ovelse ? s.mal : '', s.shots > 0 ? `${s.hits ?? '–'}/${s.shots} treff` : '', s.time > 0 ? fmt(s.time, 2) + ' s' : '', s.group > 0 ? fmt(s.group, 0) + ' mm' : '',
+        ...(s.custom || []).slice(0, 2).map(c => `${c.name} ${c.value}${c.unit ? ' ' + c.unit : ''}`)].filter(Boolean).map(esc).join(', ') || 'Fri trening';
+      pts = s.ptsPct != null ? `${fmt(s.pts, 1)}<small>av ${fmt(s.max, 1)}</small>` : s.hitPct != null ? `${fmt(s.hitPct, 0)} %<small>treff</small>` : s.pts != null ? `${fmt(s.pts, 1)}<small>poeng</small>` : '–';
+    } else {
+      thumb = `<div class="thumb">${GLYPH.dyn}</div>`;
+      line = `${s.pts} poeng på ${fmtF(s.time, 2)} s, ${s.pf === 'major' ? 'Major' : 'Minor'}`;
+      pts = `${fmtF(s.hf, 2)}<small>HF</small>`;
+    }
+    const eqLine = equipLine(s);
+    b.innerHTML = `${thumb}<div><h3>${esc(s.ovelse || (s.program === 'fri' && s.mal) || FELT_TYPE[s.feltType] || PROG_NAME[s.program])}</h3>
+      <p>${dateStr(s.ts)}${s.tid ? ' kl. ' + esc(s.tid) : ''}${s.baneName || s.sted ? ', ' + esc(s.baneName || s.sted) : ''}${s.avstand ? ', ' + fmt(s.avstand, 0) + ' m' : ''}${eqLine ? '<br>' + esc(eqLine) : ''}</p><p>${line}${s.dagsform ? ', dagsform ' + s.dagsform : ''}</p></div><div class="pts">${pts}</div>`;
+    b.addEventListener('click', () => openSeries(s));
+    const row = document.createElement('div'); row.className = 'hrow';
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'icon-btn del';
+    del.setAttribute('aria-label', `Slett serie ${s.ovelse || PROG_NAME[s.program]} ${dateStr(s.ts)}`);
+    del.innerHTML = TRASH_SVG;
+    del.addEventListener('click', () => deleteSeries(s));
+    row.append(b, del); box.appendChild(row);
+  });
+}
+
+function sumOf(arr, k) { return arr.reduce((a, s) => a + (+s[k] || 0), 0); }
+function daySum(arr) {
+  const s0 = arr[0], el = document.createElement('div'); el.className = 'daysum';
+  let big, sub;
+  if (s0.program === 'ring') {
+    const dec = arr.every(s => s.decimal), t = sumOf(arr, 'total'), mx = sumOf(arr, 'max'), xs = sumOf(arr, 'xCount'), n = sumOf(arr, 'n');
+    big = dec ? fmtF(Math.round(sumOf(arr, 'totalDec') * 10) / 10, 1) : `${t}/${mx}`;
+    sub = `${n} skudd${dec ? `, ${t}/${mx} i heltall` : ''}${xs ? ', ' + xs + ' X' : ''}`;
+  } else if (s0.program === 'dyn') {
+    const pts = sumOf(arr, 'pts'), time = sumOf(arr, 'time');
+    big = 'HF ' + fmtF(time > 0 ? pts / time : 0, 2); sub = `${pts} poeng på ${fmtF(time, 2)} s`;
+  } else if (s0.program === 'fri') {
+    const sh = sumOf(arr, 'shots'), ht = sumOf(arr, 'hits'), pt = sumOf(arr, 'pts'), mx = sumOf(arr, 'max');
+    big = mx > 0 ? `${fmt(pt, 1)}/${fmt(mx, 1)}` : sh > 0 ? `${ht}/${sh}` : String(arr.length);
+    sub = sh > 0 ? `${ht} av ${sh} treff (${fmt(ht / sh * 100, 0)} %)` : 'fri trening';
+  } else {
+    big = `${sumOf(arr, 'points')}/${sumOf(arr, 'maxPoints')}`; sub = `${sumOf(arr, 'hits')} treff, ${sumOf(arr, 'inner')} inner`;
+  }
+  el.innerHTML = `<div><b>${dateStr(s0.ts)}, ${esc(s0.ovelse || PROG_NAME[s0.program])}</b><span>Sum av ${arr.length} serie${arr.length > 1 ? 'r' : ''}: ${sub}</span></div><strong>${big}</strong>`;
+  return el;
+}
+
+/* ================= PROGRESS ================= */
+function lineChart(vals, labels, { unit = '', dec = 1 } = {}) {
+  const W = 320, H = 150, pl = 36, pr = 10, pt = 14, pb = 22;
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.1 || 1;
+  const y0 = lo - pad, y1 = hi + pad;
+  const X = i => pl + (vals.length === 1 ? (W - pl - pr) / 2 : i * (W - pl - pr) / (vals.length - 1));
+  const Y = v => pt + (1 - (v - y0) / (y1 - y0)) * (H - pt - pb);
+  let g = '';
+  [y0 + (y1 - y0) * 0.1, (y0 + y1) / 2, y1 - (y1 - y0) * 0.1].forEach(v => {
+    g += `<line x1="${pl}" x2="${W - pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="10" fill="var(--muted)">${fmt(v, dec)}</text>`;
+  });
+  const roll = vals.map((_, i) => { const a = vals.slice(Math.max(0, i - 2), i + 1); return a.reduce((x, y) => x + y, 0) / a.length; });
+  const lastV = vals[vals.length - 1];
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">${g}
+    <polyline points="${vals.map((v, i) => `${X(i)},${Y(v)}`).join(' ')}" fill="none" stroke="var(--muted)" stroke-width="1.2" opacity=".6"/>
+    ${vals.length > 2 ? `<polyline points="${roll.map((v, i) => `${X(i)},${Y(v)}`).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2.6" stroke-linejoin="round"/>` : ''}
+    ${vals.map((v, i) => `<circle cx="${X(i)}" cy="${Y(v)}" r="3.2" fill="var(--hit)"/>`).join('')}
+    <text x="${pl}" y="${H - 5}" font-size="10" fill="var(--muted)">${esc(labels[0])}</text>
+    ${vals.length > 1 ? `<text x="${W - pr}" y="${H - 5}" font-size="10" fill="var(--muted)" text-anchor="end">${esc(labels[labels.length - 1])}</text>` : ''}
+    <text x="${X(vals.length - 1)}" y="${Y(lastV) - 8}" font-size="11" font-weight="600" fill="var(--ink)" text-anchor="${vals.length > 1 ? 'end' : 'middle'}">${fmt(lastV, dec)}${unit}</text></svg>`;
+}
+function compositeTarget(list) {
+  const recent = list.slice(-5), g = geom(recent[recent.length - 1].targetSnap);
+  let s = `<svg viewBox="-1.08 -1.08 2.16 2.16" role="img" aria-label="Treffbilde siste serier"><circle r="1.06" fill="var(--surface)" stroke="var(--line)" stroke-width=".012"/>`;
+  for (let j = g.rings - 1; j >= 0; j--) s += `<circle r="${g.rTen + j * g.step}" fill="none" stroke="var(--muted)" stroke-width="${j === g.rings - 1 ? .012 : .006}"/>`;
+  if (g.rX) s += `<circle r="${g.rX}" fill="none" stroke="var(--muted)" stroke-width=".006" stroke-dasharray=".02 .015"/>`;
+  recent.forEach((ser, k) => { const op = 0.3 + 0.7 * (k + 1) / recent.length; (ser.rel || []).forEach(p => { s += `<circle cx="${p.x}" cy="${p.y}" r=".035" fill="var(--hit)" opacity="${op.toFixed(2)}"/>`; }); });
+  recent.forEach((ser, k) => {
+    if (ser.n < 2) return; const op = 0.3 + 0.7 * (k + 1) / recent.length, d = .045;
+    s += `<path d="M${ser.mpiX} ${ser.mpiY - d}L${ser.mpiX + d} ${ser.mpiY}L${ser.mpiX} ${ser.mpiY + d}L${ser.mpiX - d} ${ser.mpiY}Z" fill="var(--mpi)" opacity="${op.toFixed(2)}" stroke="var(--surface)" stroke-width=".01"/>`;
+  });
+  return s + '</svg>';
+}
+function fillProgFilters() {
+  const p = $('#pProg').value;
+  const inProg = S.series.filter(s => s.program === p);
+  const opts = (sel, label, pairs) => {
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">${label}</option>` + pairs.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+    if (pairs.some(([v]) => v === cur)) sel.value = cur;
+  };
+  const uniq = (arr) => [...new Map(arr.filter(x => x[0]).map(x => [x[0], x])).values()].sort((a, b) => a[1].localeCompare(b[1], 'nb'));
+  opts($('#pOvelse'), 'Alle øvelser', uniq(inProg.map(s => [s.ovelse, s.ovelse])));
+  opts($('#pWeapon'), 'Alle våpen', uniq(inProg.map(s => [s.weaponName, s.weaponName])));
+  opts($('#pBane'), 'Alle baner', uniq(inProg.map(s => [s.baneName, s.baneName])));
+  opts($('#pAmmo'), 'All ammunisjon', uniq(inProg.map(s => [s.ammoName, s.ammoName])));
+}
+const avgOf = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+function renderProgress() {
+  const box = $('#progBody');
+  if (!S.loaded) { box.innerHTML = '<p class="empty">Henter serier …</p>'; return; }
+  fillProgFilters();
+  const p = $('#pProg').value, fo = $('#pOvelse').value, fw = $('#pWeapon').value, fa = $('#pAmmo').value, fb = $('#pBane').value, ff = +$('#pForm').value;
+  const base = S.series.filter(s => s.program === p && (!fo || s.ovelse === fo)).slice().sort((a, b) => a.ts - b.ts);
+  const list = base.filter(s => (!fw || s.weaponName === fw) && (!fa || s.ammoName === fa) && (!fb || s.baneName === fb) && (!ff || s.dagsform === ff));
+  if (list.length < 2) { box.innerHTML = `<p class="empty">${list.length ? 'Lagre én serie til' : 'Lagre minst to serier'} med disse valgene for å se utviklingen.</p>` + compareTable(base, p); return; }
+
+  let main, mainLbl, mainDec, mainUnit = '', second = null, html = '';
+  const delta = (now, prev, lowerBetter, d) => {
+    if (prev == null) return '<em>&nbsp;</em>';
+    const diff = now - prev, good = lowerBetter ? diff < 0 : diff > 0;
+    if (Math.abs(diff) < Math.pow(10, -d) / 2) return '<em>Uendret mot forrige 5</em>';
+    return `<em class="${good ? 'up' : 'down'}">${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff), d)} mot forrige 5</em>`;
+  };
+  const last5 = list.slice(-5), prev5 = list.slice(-10, -5);
+  const labels = list.map(s => shortDate(s.ts));
+
+  if (p === 'ring') {
+    const allDec = list.every(s => s.decimal);
+    main = s => allDec ? s.totalDec / s.n : s.avg; mainLbl = 'Snitt per skudd'; mainDec = 2;
+    const allMm = list.every(s => !s.targetSnap.unitless);
+    const grp = s => allMm ? s.es * s.targetSnap.outer / 2 : s.es / geom(s.targetSnap).step;
+    const multi = list.filter(s => s.n > 1), gU = allMm ? ' mm' : '';
+    const gNow = avgOf(multi.slice(-5).map(grp)), gPrevA = multi.slice(-10, -5).map(grp);
+    const xs = list.reduce((a, s) => a + (s.xCount || 0), 0);
+    const best = list.reduce((b, s) => (s.total / s.max > b.total / b.max ? s : b), list[0]);
+    html += `<div class="kpis">
+      <div class="kpi"><b>${fmtF(avgOf(last5.map(main)), 2)}</b><span>${mainLbl}, siste 5</span><br>${delta(avgOf(last5.map(main)), prev5.length ? avgOf(prev5.map(main)) : null, false, 2)}</div>
+      <div class="kpi"><b>${multi.length ? fmt(gNow, 1) + gU : '–'}</b><span>Gruppe${allMm ? '' : ' (ringbr.)'}, siste 5</span><br>${multi.length ? delta(gNow, gPrevA.length ? avgOf(gPrevA) : null, true, 1) : ''}</div>
+      <div class="kpi"><b>${best.total}/${best.max}</b><span>Beste serie</span><br><em>${dateStr(best.ts)}</em></div>
+      <div class="kpi"><b>${xs}</b><span>Innerblinker totalt</span><br><em>${list.length} serier, ${list.reduce((a, s) => a + s.n, 0)} skudd</em></div></div>
+      <div class="chart"><h3>${mainLbl}</h3><p>Grønn linje er glidende snitt av tre serier. Høyere er bedre.</p>${lineChart(list.map(main), labels, { dec: 2 })}</div>
+      ${multi.length >= 2 ? `<div class="chart"><h3>Gruppestørrelse</h3><p>Største avstand mellom to treff${allMm ? '' : ', i ringbredder'}. Lavere er bedre.</p>${lineChart(multi.map(grp), multi.map(s => shortDate(s.ts)), { unit: gU })}</div>` : ''}
+      <div class="chart composite">${compositeTarget(list)}
+        <div><h3>Treffbilde, siste ${Math.min(5, list.length)} serier</h3>
+        <p>Oransje er treff, blå er treffpunktet for hver serie. Sterkere farge betyr nyere serie. Ligger de blå samlet utenfor senter, bør siktet trolig justeres. Spredte blå punkter tyder mer på varierende teknikk.</p></div></div>`;
+  } else if (p === 'fri') {
+    main = s => friMain(s) ?? 0; mainDec = 1;
+    html += friProgress(list, labels, last5, prev5, delta);
+  } else if (p === 'felt') {
+    main = s => s.maxPoints ? s.points / s.maxPoints * 100 : 0; mainDec = 0;
+    const hitp = s => s.hitPct || 0;
+    const best = list.reduce((b, s) => (main(s) > main(b) ? s : b), list[0]);
+    const pos = {};
+    list.forEach(s => (s.stations || []).forEach(st => {
+      const k = st.pos || ''; const a = pos[k] || (pos[k] = { n: 0, hits: 0, shots: 0, t: [] });
+      a.n++; a.hits += st.figs.reduce((x, f) => x + f.hits, 0); a.shots += s.shots; if (st.time > 0) a.t.push(st.time);
+    }));
+    const posRows = Object.entries(pos).sort((x, y) => y[1].hits / y[1].shots - x[1].hits / x[1].shots)
+      .map(([k, a]) => `<tr><td>${esc(POS_NAME[k] || 'Ikke angitt')}</td><td class="num">${a.n}</td><td class="num">${fmt(a.hits / a.shots * 100, 0)} %</td><td class="num">${a.t.length ? fmt(avgOf(a.t), 1) + ' s' : '–'}</td></tr>`).join('');
+    html += `<div class="kpis">
+      <div class="kpi"><b>${fmt(avgOf(last5.map(main)), 0)} %</b><span>Poeng av maks, siste 5</span><br>${delta(avgOf(last5.map(main)), prev5.length ? avgOf(prev5.map(main)) : null, false, 0)}</div>
+      <div class="kpi"><b>${fmt(avgOf(last5.map(hitp)), 0)} %</b><span>Treffprosent, siste 5</span><br>${delta(avgOf(last5.map(hitp)), prev5.length ? avgOf(prev5.map(hitp)) : null, false, 0)}</div>
+      <div class="kpi"><b>${best.points}/${best.maxPoints}</b><span>Beste serie</span><br><em>${dateStr(best.ts)}</em></div>
+      <div class="kpi"><b>${fmt(avgOf(last5.map(s => s.inner)), 1)}</b><span>Innertreff per serie, siste 5</span><br><em>${list.length} serier</em></div></div>
+      <div class="chart"><h3>Poeng i prosent av maks</h3><p>Prosent gjør løyper med ulikt antall figurer sammenlignbare.</p>${lineChart(list.map(main), labels, { unit: ' %', dec: 0 })}</div>
+      <div class="chart"><h3>Treffprosent per stilling</h3><p>Viser hvilke stillinger du bør trene mest på.</p>
+        <div class="tablewrap"><table><thead><tr><th>Stilling</th><th class="num">Standplasser</th><th class="num">Treff</th><th class="num">Skytetid</th></tr></thead><tbody>${posRows}</tbody></table></div></div>`;
+  } else {
+    main = s => s.hf; mainDec = 4;
+    const acc = s => s.acc || 0;
+    const best = list.reduce((b, s) => (s.hf > b.hf ? s : b), list[0]);
+    html += `<div class="kpis">
+      <div class="kpi"><b>${fmtF(avgOf(last5.map(main)), 2)}</b><span>Hit factor, siste 5</span><br>${delta(avgOf(last5.map(main)), prev5.length ? avgOf(prev5.map(main)) : null, false, 2)}</div>
+      <div class="kpi"><b>${fmt(avgOf(last5.map(acc)), 0)} %</b><span>Presisjon (andel av maks poeng), siste 5</span><br>${delta(avgOf(last5.map(acc)), prev5.length ? avgOf(prev5.map(acc)) : null, false, 0)}</div>
+      <div class="kpi"><b>${fmtF(best.hf, 2)}</b><span>Beste hit factor</span><br><em>${dateStr(best.ts)}</em></div>
+      <div class="kpi"><b>${list.reduce((a, s) => a + (s.M || 0) + (s.NS || 0) + (s.P || 0), 0)}</b><span>Straffer totalt</span><br><em>${list.length} serier</em></div></div>
+      <div class="chart"><h3>Hit factor</h3><p>Høyere er bedre. Sammenlign helst like øvelser.</p>${lineChart(list.map(main), labels, { dec: 2 })}</div>
+      <div class="chart"><h3>Presisjon</h3><p>Poeng på skivene som andel av alle A-er. Faller den mens HF øker, går farten på bekostning av treffene.</p>${lineChart(list.map(acc), labels, { unit: ' %', dec: 0 })}</div>`;
+  }
+  box.innerHTML = html + formTable(list, main, p) + compareTable(base, p);
+}
+function formTable(list, main, p) {
+  const f = v => p === 'ring' || p === 'dyn' ? fmtF(v, 2) : p === 'fri' ? fmt(v, 1) : fmt(v, 0) + ' %';
+  const rows = [1, 2, 3, 4, 5].map(d => { const a = list.filter(s => s.dagsform === d); return a.length ? `<tr><td>${d} ${FORM_NAME[d]}</td><td class="num">${a.length}</td><td class="num">${f(avgOf(a.map(main)))}</td></tr>` : ''; }).join('');
+  if (!rows) return '';
+  return `<div class="chart"><h3>Resultat etter dagsform</h3><p>Viser om formen du kjenner på før skyting, henger sammen med resultatet.</p>
+    <div class="tablewrap"><table><thead><tr><th>Dagsform</th><th class="num">Serier</th><th class="num">${p === 'ring' ? 'Snitt/skudd' : p === 'dyn' ? 'HF' : p === 'fri' ? 'Resultat' : 'Poeng %'}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+function compareTable(base, p) {
+  if (!base.length) return '';
+  const groups = new Map();
+  base.forEach(s => { const key = (s.weaponName || 'Uten våpen') + '|' + (s.ammoName || 'Uten ammunisjon'); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(s); });
+  if (groups.size < 1) return '';
+  const cols = p === 'ring' ? ['Snitt/skudd', 'Gruppe'] : p === 'felt' ? ['Poeng %', 'Inner/serie'] : p === 'fri' ? ['Treff %', 'Poeng %'] : ['HF', 'Presisjon'];
+  const rows = [...groups.entries()].map(([key, arr]) => {
+    const [w, a] = key.split('|');
+    let m, sec, sortV;
+    if (p === 'ring') {
+      sortV = avgOf(arr.map(s => s.avg)); m = fmtF(sortV, 2);
+      const mm = arr.filter(s => s.n > 1 && !s.targetSnap.unitless);
+      sec = mm.length ? fmt(avgOf(mm.map(s => s.es * s.targetSnap.outer / 2)), 1) + ' mm' : '–';
+    } else if (p === 'fri') {
+      const h = arr.filter(s => s.hitPct != null), q = arr.filter(s => s.ptsPct != null);
+      sortV = h.length ? avgOf(h.map(s => s.hitPct)) : avgOf(q.map(s => s.ptsPct));
+      m = h.length ? fmt(avgOf(h.map(s => s.hitPct)), 0) + ' %' : '–'; sec = q.length ? fmt(avgOf(q.map(s => s.ptsPct)), 0) + ' %' : '–';
+    } else if (p === 'felt') {
+      sortV = avgOf(arr.map(s => s.maxPoints ? s.points / s.maxPoints * 100 : 0)); m = fmt(sortV, 0) + ' %'; sec = fmt(avgOf(arr.map(s => s.inner)), 1);
+    } else { sortV = avgOf(arr.map(s => s.hf)); m = fmtF(sortV, 2); sec = fmt(avgOf(arr.map(s => s.acc || 0)), 0) + ' %'; }
+    return { w, a, n: arr.length, m, sec, sortV };
+  }).sort((x, y) => y.sortV - x.sortV);
+  return `<div class="chart"><h3>Våpen og ammunisjon</h3><p>Snitt per kombinasjon${$('#pOvelse').value ? ' i valgt øvelse' : ''}. Få serier gir usikre tall.</p>
+    <div class="tablewrap"><table><thead><tr><th>Kombinasjon</th><th class="num">Serier</th><th class="num">${cols[0]}</th><th class="num">${cols[1]}</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(r.w)}<br><span class="muted">${esc(r.a)}</span></td><td class="num">${r.n}</td><td class="num">${r.m}</td><td class="num">${r.sec}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+['pProg', 'pOvelse', 'pWeapon', 'pAmmo', 'pBane', 'pForm'].forEach(id => $('#' + id).addEventListener('change', e => {
+  if (id === 'pProg') { $('#pOvelse').value = ''; $('#pWeapon').value = ''; $('#pAmmo').value = ''; $('#pBane').value = ''; }
+  renderProgress();
+}));
+$('#hProg').addEventListener('change', renderHistory);
+
+function renderAllLists() {
+  const names = [...new Set(S.series.filter(s => s.program === S.program).map(s => s.ovelse).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'nb'));
+  $('#ovelser').innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
+  const steder = [...new Set(S.series.map(s => s.sted).concat(S.eq.ranges.map(r => r.sted)).filter(Boolean))];
+  $('#steder').innerHTML = steder.map(n => `<option value="${esc(n)}">`).join('');
+  const fri = S.series.filter(s => s.program === 'fri');
+  $('#friMal').innerHTML = [...new Set(fri.map(s => s.mal).filter(Boolean))].map(n => `<option value="${esc(n)}">`).join('');
+  $('#friNames').innerHTML = [...new Set(fri.flatMap(s => (s.custom || []).map(c => c.name)).filter(Boolean))].map(n => `<option value="${esc(n)}">`).join('');
+  fillEquipSelects();
+  if (!$('#progBody').dataset.init && S.series.length) { $('#pProg').value = S.series[0].program; $('#progBody').dataset.init = '1'; }
+  renderHistory(); renderProgress(); renderGear();
+}
+
+/* ---------- Tabs & toast ---------- */
+function showTab(t) {
+  ['new', 'history', 'progress', 'gear'].forEach(x => $('#view-' + x).classList.toggle('hidden', x !== t));
+  $$('nav.tabs button').forEach(b => { if (b.dataset.tab === t) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  window.scrollTo(0, 0);
+  if (t === 'new') requestAnimationFrame(draw);
+}
+$$('nav.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+let toastT;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 2600); }
+function toastAction(m, label, fn) {
+  const t = $('#toast'); t.textContent = m;
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+  b.addEventListener('click', () => { clearTimeout(toastT); t.classList.add('hidden'); fn(); });
+  t.appendChild(b); t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 7000);
+}
+
+/* ---------- Backup ---------- */
+$('#btnExport').addEventListener('click', async () => {
+  const data = { app: 'skiveboka', version: 1, exported: new Date().toISOString(), eq: S.eq, series: S.series };
+  const name = `blink-${todayStr()}.json`;
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  try {
+    const file = new File([blob], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Blink sikkerhetskopi' }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+});
+$('#importInput').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!data || data.app !== 'skiveboka' || !Array.isArray(data.series)) { toast('Filen er ikke en sikkerhetskopi fra Blink.'); return; }
+    if (!confirm(`Importere ${data.series.length} serier og utstyret i filen? Serier som allerede finnes, blir erstattet med versjonen i filen.`)) return;
+    await Store.putMany(data.series.filter(x => x && x.id));
+    const cur = clone(S.eq), inc = normEq(data.eq);
+    ['weapons', 'ammo', 'targets', 'ranges'].forEach(k => inc[k].forEach(it => { const i = cur[k].findIndex(x => x.id === it.id); if (i >= 0) cur[k][i] = it; else cur[k].push(it); }));
+    await Store.saveEq(cur);
+    toast('Import fullført');
+  } catch (_) { toast('Kunne ikke lese filen.'); }
+});
+
+/* ---------- Live sum bar ---------- */
+function updateSumBar() {
+  const bar = $('#sumBar'); if (!bar) return;
+  const onNew = !$('#view-new').classList.contains('hidden'), p = S.program;
+  let big = '–', sub = '';
+  if (p === 'ring') {
+    if (!S.src) { bar.classList.add('hidden'); return; }
+    const rel = relHits();
+    if (!rel) sub = 'Marker senter og ytterring';
+    else if (!rel.length) sub = 'Ingen treff markert ennå';
+    else {
+      const g = geom(currentTarget()), st = ringStats(rel, g, holeR()), dec = $('#fDecimal').checked;
+      big = dec ? fmtF(st.totalDec, 1) : `${st.total}/${st.max}`;
+      sub = `${st.n} skudd, snitt ${fmtF(dec ? st.avgDec : st.avg, 2)}${g.rX > 0 ? ', ' + st.xCount + ' X' : ''}`;
+    }
+  } else if (p === 'fri' && S.fri) {
+    const t = friTotalsText(S.fri); big = t.big.replace(/<[^>]+>/g, ''); sub = t.sub;
+  } else if (p === 'felt' && S.mini) {
+    const c = miniCalc(S.mini); big = `${c.points}/${c.maxPoints}`; sub = `${c.hits} av ${c.shotsTotal} treff, ${c.inner} inner`;
+  } else if (p === 'dyn' && S.dyn) {
+    const c = dynCalc(S.dyn); big = 'HF ' + fmtF(c.hf, 4); sub = `${c.pts} poeng på ${fmtF(c.time, 2)} s`;
+  }
+  bar.innerHTML = `<div><div><b>Sum, ${PROG_NAME[p].toLowerCase()}</b><span>${esc(sub)}</span></div><strong>${big}</strong></div>`;
+  bar.classList.toggle('hidden', !onNew);
+}
+{ const f = updateRing; updateRing = function () { f(); updateSumBar(); }; }
+{ const f = renderFriTotals; renderFriTotals = function () { f(); updateSumBar(); }; }
+{ const f = renderMini; renderMini = function () { f(); updateSumBar(); }; }
+{ const f = renderDynTotals; renderDynTotals = function () { f(); updateSumBar(); }; }
+{ const f = setProgram; setProgram = function (p) { f(p); updateSumBar(); }; }
+{ const f = showTab; showTab = function (t) { f(t); updateSumBar(); }; }
+{ const f = resetRing; resetRing = function () { f(); updateSumBar(); }; }
+
+/* ---------- Boot ---------- */
+resetAll();
+renderAllLists();
+refreshAi();
+if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+Store.init().then(() => { fillEquipSelects(); if (!S.editingId) { $('#fWeapon').value = findW(prefs.weaponId) ? prefs.weaponId : ''; $('#fAmmo').value = findA(prefs.ammoId) ? prefs.ammoId : ''; if (findR(prefs.baneId)) { $('#fBane').value = prefs.baneId; const r = findR(prefs.baneId); if (r.sted && !$('#fSted').value) $('#fSted').value = r.sted; } updateMiniNote(); } });
+})();
+</script>
+</body>
+</html>
